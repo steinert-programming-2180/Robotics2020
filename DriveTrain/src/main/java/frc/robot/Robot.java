@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj.XboxController;
 
 
 /**
@@ -26,15 +27,12 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-
   
-  Joystick joyL, joyR;
   TalonSRX talL0;
   TalonSRX talL1;
-  TalonSRX talL2;
   TalonSRX talR0;
   TalonSRX talR1;
-  TalonSRX talR2;
+  XboxController controller;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -46,15 +44,12 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
 
-    talL0 = new TalonSRX(1);
-    talR0 = new TalonSRX(2);
-    talL1 = new TalonSRX(3);
-    talR1 = new TalonSRX(4);
-    talL2 = new TalonSRX(5);
-    talR2 = new TalonSRX(6);
+    controller = new XboxController(0);
 
-    joyL = new Joystick(0);
-    joyR = new Joystick(1);
+    talL0 = new TalonSRX(6);
+    talL1 = new TalonSRX(10);
+    talR0 = new TalonSRX(4);
+    talR1 = new TalonSRX(2);
     m_robotContainer = new RobotContainer();
   }
 
@@ -72,13 +67,13 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+    double leftJoystickAxis = controller.getRawAxis(1);
+    double rightJoystickAxis = controller.getRawAxis(5);
 
-    talL0.set(ControlMode.PercentOutput, joyL.getY());
-    talL1.set(ControlMode.PercentOutput, joyL.getY());
-    talL2.set(ControlMode.PercentOutput, joyL.getY());
-    talR0.set(ControlMode.PercentOutput, -joyR.getY());
-    talR1.set(ControlMode.PercentOutput, -joyR.getY());
-    talR2.set(ControlMode.PercentOutput, -joyR.getY());
+    talL0.set(ControlMode.PercentOutput, leftJoystickAxis);
+    talL1.set(ControlMode.PercentOutput, leftJoystickAxis);
+    talR0.set(ControlMode.PercentOutput, -rightJoystickAxis);
+    talR1.set(ControlMode.PercentOutput, -rightJoystickAxis);
     
   }
 
