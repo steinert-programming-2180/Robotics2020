@@ -27,7 +27,7 @@ public class Robot extends TimedRobot {
 
   double speed;
   CANSparkMax motor = new CANSparkMax(1, MotorType.kBrushless);
-  CANEncoder encoder = motor.getEncoder(EncoderType.kQuadrature, 4096);
+  CANEncoder encoder = new CANEncoder(motor);
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -64,6 +64,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
+    SmartDashboard.putNumber("Position", encoder.getPosition());
   }
 
   /**
@@ -102,9 +103,14 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    motor.set(1.0);
-    speed = encoder.getVelocity();
-    SmartDashboard.putNumber("Velocity", speed);
+    motor.set(0.2);
+    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
+    SmartDashboard.putNumber("Velocity Conversion", encoder.getVelocityConversionFactor());
+    SmartDashboard.putNumber("Position", encoder.getPosition());
+    SmartDashboard.putNumber("Position Conversion", encoder.getPositionConversionFactor());
+    SmartDashboard.putNumber("Counts Per Revolution", encoder.getCountsPerRevolution());
+    //speed = encoder.getVelocity();
+    //SmartDashboard.putNumber("Velocity", speed);
   }
 
   @Override
