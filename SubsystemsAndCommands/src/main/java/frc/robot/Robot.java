@@ -7,16 +7,9 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -28,32 +21,15 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  
-  TalonSRX talL0;
-  TalonSRX talL1;
-  TalonSRX talL2;
-  TalonSRX talR0;
-  TalonSRX talR1;
-  XboxController controller;
-  double speedFactor = 1.0/3.0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   @Override
-  
   public void robotInit() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-
-    controller = new XboxController(0);
-
-    talL0 = new TalonSRX(6);
-    talL1 = new TalonSRX(10);
-    talL2 = new TalonSRX(4);
-    talR0 = new TalonSRX(9);
-    talR1 = new TalonSRX(2);
     m_robotContainer = new RobotContainer();
   }
 
