@@ -7,15 +7,12 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
+import edu.wpi.first.wpilibj.XboxController;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -26,9 +23,13 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  Joystick joy;
-  TalonSRX left;
-  TalonSRX right;
+  TalonSRX talL1;
+  TalonSRX talL2;
+  TalonSRX talL3;
+  TalonSRX talR1;
+  TalonSRX talR2;
+  TalonSRX talR3;
+  XboxController controller;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -39,9 +40,14 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-    joy = new Joystick(0);
-    left = new TalonSRX(2);
-    right = new TalonSRX(1);
+
+    talL1 = new TalonSRX(3);
+    talL2 = new TalonSRX(5);
+    talL3 = new TalonSRX(6);
+    talR1 = new TalonSRX(1);
+    talR2 = new TalonSRX(2);
+    talR3 = new TalonSRX(3);
+    controller = new XboxController(0);
   }
 
   /**
@@ -107,9 +113,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    SmartDashboard.putNumber("Axis", joy.getRawAxis(2));
-    left.set(ControlMode.PercentOutput, -joy.getRawAxis(2));
-    right.set(ControlMode.PercentOutput, joy.getRawAxis(2));
+    double joystickAxis = controller.getRawAxis()
+    double joystickAxix = controller.getRawAxis()
   }
 
   @Override
