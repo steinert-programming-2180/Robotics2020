@@ -29,9 +29,10 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
 
+  double setSpeed = 0;
+
   CANSparkMax motor = new CANSparkMax(1, MotorType.kBrushless);
   CANEncoder encoder = new CANEncoder(motor);
-  Joystick stick = new Joystick(0);
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -69,7 +70,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
-    SmartDashboard.putNumber("Axis", stick.getRawAxis(2));
+    //SmartDashboard.putNumber("Axis", stick.getRawAxis(2));
     SmartDashboard.putNumber("Speed", encoder.getVelocity());
   }
 
@@ -100,6 +101,7 @@ public class Robot extends TimedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
     motor.setIdleMode(IdleMode.kCoast);
+    SmartDashboard.putNumber("InSpeed", setSpeed);
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -110,9 +112,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    motor.set(stick.getRawAxis(2));
-    SmartDashboard.putNumber("Axis", stick.getRawAxis(2));
-    SmartDashboard.putNumber("Speed", encoder.getVelocity());
+    //motor.set(stick.getRawAxis(2));
+    setSpeed = SmartDashboard.getNumber("InSpeed", 0);
+    motor.set(setSpeed);
   }
 
   @Override

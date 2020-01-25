@@ -11,6 +11,7 @@ import com.revrobotics.CANEncoder;
 import com.revrobotics.CANPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.ControlType;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -29,7 +30,6 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
   CANSparkMax motor1 = new CANSparkMax(1, MotorType.kBrushless);
-  CANSparkMax motor2 = new CANSparkMax(2, MotorType.kBrushless);
   CANPIDController pidController = new CANPIDController(motor1);  //Possible Error
   CANEncoder encoder = new CANEncoder(motor1);
 
@@ -46,6 +46,9 @@ public class Robot extends TimedRobot {
   double D;
   double F;
   double Iz;
+  double Max;
+  double Min;
+  double InTarget;
 
   double targetSpeed;
 
@@ -57,6 +60,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    motor1.setIdleMode(IdleMode.kCoast);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
@@ -71,11 +75,22 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    P = SmartDashboard.getNumber("P Gain", 0);
+    I = SmartDashboard.getNumber("I Gain", 0);
+    D = SmartDashboard.getNumber("D Gain", 0);
+    Iz = SmartDashboard.getNumber("I Zone", 0);
+    F = SmartDashboard.getNumber("Feed Forward", 0);
+    Max = SmartDashboard.getNumber("Max Output", 0);
+    Min = SmartDashboard.getNumber("Min Output", 0);
+    InTarget = SmartDashboard.getNumber("Target", 0);
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
+    SmartDashboard.putNumber("Position", encoder.getPosition());
+
   }
 
   /**
@@ -111,8 +126,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-
-
     pidController.setP(kP);
     pidController.setI(kI);
     pidController.setD(kD);
@@ -128,7 +141,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Feed Forward", kF);
     SmartDashboard.putNumber("Max Output", kMaxOutput);
     SmartDashboard.putNumber("Min Output", kMinOutput);
-    SmartDashboard.putNumber("Target Speed", targetSpeed);
+    SmartDashboard.putNumber("Target", targetSpeed);
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -143,28 +156,19 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    double p = SmartDashboard.getNumber("P Gain", 0);
-    double i = SmartDashboard.getNumber("I Gain", 0);
-    double d = SmartDashboard.getNumber("D Gain", 0);
-    double iz = SmartDashboard.getNumber("I Zone", 0);
-    double ff = SmartDashboard.getNumber("Feed Forward", 0);
-    double max = SmartDashboard.getNumber("Max Output", 0);
-    double min = SmartDashboard.getNumber("Min Output", 0);
-    double inTarget = SmartDashboard.getNumber("Target", 0);
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
-    if((p != kP)) { pidController.setP(p); kP = p; }
-    if((i != kI)) { pidController.setI(i); kI = i; }
-    if((d != kD)) { pidController.setD(d); kD = d; }
-    if((iz != kIz)) { pidController.setIZone(iz); kIz = iz; }
-    if((ff != kF)) { pidController.setFF(ff); kF = ff; }
-    if((inTarget != targetSpeed)) { targetSpeed = inTarget; }
-    if((max != kMaxOutput) || (min != kMinOutput)) { 
-      pidController.setOutputRange(min, max); 
-      kMinOutput = min; kMaxOutput = max; 
+    if((P != kP)) { pidController.setP(P); kP = P; }
+    if((I != kI)) { pidController.setI(I); kI = I; }
+    if((D != kD)) { pidController.setD(D); kD = D; }
+    if((Iz != kIz)) { pidController.setIZone(Iz); kIz = Iz; }
+    if((F != kF)) { pidController.setFF(F); kF = F; }
+    if((InTarget != targetSpeed)) { targetSpeed = InTarget; }
+    if((Max != kMaxOutput) || (Min != kMinOutput)) { 
+      pidController.setOutputRange(Min, Max);
+      kMinOutput = Min; kMaxOutput = Max;
     }
 
-    motor2.follow(motor1);
     pidController.setReference(targetSpeed, ControlType.kVelocity);
   }
 
