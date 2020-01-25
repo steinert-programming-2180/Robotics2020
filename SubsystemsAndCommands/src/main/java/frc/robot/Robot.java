@@ -115,13 +115,13 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     double forward = con.controller.getRawAxis(1);
     double right = con.controller.getRawAxis(4);
-    boolean moving = forward != 0;
+    double rightMove = right*0.2;
 
     for(TalonSRX i : leftTals){
-      i.set(ControlMode.PercentOutput, forward*-0.3+right*0.2); 
+      i.set(ControlMode.PercentOutput, forward*-(0.2-rightMove)+rightMove);
     }
     for(TalonSRX i : rightTals){
-      i.set(ControlMode.PercentOutput, forward*0.3+right*-0.2);
+      i.set(ControlMode.PercentOutput, forward*(0.2-rightMove)+rightMove);
     }
   }
 
