@@ -7,25 +7,27 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+
+/**
+ * The VM is configured to automatically run this class, and to call the functions corresponding to
+ * each mode, as described in the TimedRobot documentation. If you change the name of this class or
+ * the package after creating this project, you must also update the build.gradle file in the
+ * project.
+ */
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
-  private RobotContainer rc;
-  private Constants con;
-  
-  TalonSRX[] leftTals = new TalonSRX[3];
-  TalonSRX[] rightTals = new TalonSRX[3];
-  TalonSRX[] allTals = new TalonSRX[6];
-  double speedFactor = 1.0/3.0;
-  double turn = 0.2;
+  private RobotContainer m_robotContainer;
+  Joystick joy;
+  TalonSRX left;
+  TalonSRX right;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -33,21 +35,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    rc = new RobotContainer();
-    con = new Constants();
-
-    for(int i = 0; i < con.leftPorts.length; i++){
-      int talonID = con.leftPorts[i];
-      leftTals[i] = new TalonSRX(talonID);
-      allTals[i] = leftTals[i];
-    }
-    
-    for(int i = 0; i < con.rightPorts.length; i++){
-      int talonID = con.rightPorts[i];
-      rightTals[i] = new TalonSRX(talonID);
-      allTals[i+2] = rightTals[i];
-    }
-
+    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
+    // autonomous chooser on the dashboard.
+    m_robotContainer = new RobotContainer();
+    joy = new Joystick(0);
+    left = new TalonSRX(4);
+    right = new TalonSRX(1);
   }
 
   /**
@@ -82,7 +75,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = rc.getAutonomousCommand();
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
@@ -113,16 +106,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    double forward = con.controller.getRawAxis(1);
-    double right = con.controller.getRawAxis(4);
-    boolean moving = forward != 0;
-
-    for(TalonSRX i : leftTals){
-      i.set(ControlMode.PercentOutput, forward*-0.3+right*0.2); 
-    }
-    for(TalonSRX i : rightTals){
-      i.set(ControlMode.PercentOutput, forward*0.3+right*-0.2);
-    }
+    left.set(ControlMode.PercentOutput, -joy.getRawAxis(2));
+    right.set(ControlMode.PercentOutput, joy.getRawAxis(2));
   }
 
   @Override

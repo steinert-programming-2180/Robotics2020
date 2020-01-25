@@ -9,22 +9,20 @@ package frc.robot.commands;
 
 import frc.robot.subsystems.ExampleSubsystem;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.subsystems.Drive;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 /**
  * An example command that uses an example subsystem.
  */
-public class DriveC extends CommandBase {
+public class ExampleCommand extends CommandBase {
   @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.SingularField"})
-  private final Drive m_subsystem;
+  private final ExampleSubsystem m_subsystem;
 
   /**
    * Creates a new ExampleCommand.
    *
    * @param subsystem The subsystem used by this command.
    */
-  public DriveC(Drive subsystem) {
+  public ExampleCommand(ExampleSubsystem subsystem) {
     m_subsystem = subsystem;
     // Use addRequirements() here to declare subsystem dependencies.
     addRequirements(subsystem);
@@ -38,7 +36,6 @@ public class DriveC extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-      m_subsystem.periodic();
   }
 
   // Called once the command ends or is interrupted.
@@ -50,9 +47,5 @@ public class DriveC extends CommandBase {
   @Override
   public boolean isFinished() {
     return false;
-  }
-
-  public void callMoveForward(TalonSRX tal, double speed){
-      m_subsystem.moveForward(tal, speed);
   }
 }

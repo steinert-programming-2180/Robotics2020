@@ -7,26 +7,18 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-
-public class Drive extends SubsystemBase {
+public class ExampleSubsystem extends SubsystemBase {
   /**
    * Creates a new ExampleSubsystem.
    */
+  public ExampleSubsystem() {
 
-  public Drive() {
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-  }
-
-  public void moveForward(TalonSRX tal, double speed){
-      tal.set(ControlMode.PercentOutput, speed);
   }
 }
