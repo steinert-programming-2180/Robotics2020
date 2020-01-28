@@ -7,13 +7,13 @@
 
 package frc.robot;
 
+import java.util.Date;
+
 import com.revrobotics.CANEncoder;
-import com.revrobotics.CANPIDController;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.ControlType;
-import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,30 +29,13 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
+
+  long firstTime = 0;
+  long currentTime = 0;
+  double setSpeed;
   CANSparkMax motor1 = new CANSparkMax(1, MotorType.kBrushless);
-  CANPIDController pidController = new CANPIDController(motor1);  //Possible Error
   CANEncoder encoder = new CANEncoder(motor1);
-
-  double kP;
-  double kI;
-  double kD;
-  double kF;
-  double kIz;
-  double kMaxOutput;
-  double kMinOutput;
-
-  double P;
-  double I;
-  double D;
-  double F;
-  double Iz;
-  double Max;
-  double Min;
-  double InTarget;
-
-  double targetSpeed;
-
-
+  Joystick stick = new Joystick(0);
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -60,7 +43,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    motor1.setIdleMode(IdleMode.kCoast);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
@@ -75,22 +57,14 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    P = SmartDashboard.getNumber("P Gain", 0);
-    I = SmartDashboard.getNumber("I Gain", 0);
-    D = SmartDashboard.getNumber("D Gain", 0);
-    Iz = SmartDashboard.getNumber("I Zone", 0);
-    F = SmartDashboard.getNumber("Feed Forward", 0);
-    Max = SmartDashboard.getNumber("Max Output", 0);
-    Min = SmartDashboard.getNumber("Min Output", 0);
-    InTarget = SmartDashboard.getNumber("Target", 0);
+    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
+    SmartDashboard.putNumber("Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
+    SmartDashboard.putNumber("Axis" , ((((-1 * stick.getRawAxis(2)) + 1) / 2)));
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-    SmartDashboard.putNumber("Position", encoder.getPosition());
-
   }
 
   /**
@@ -126,22 +100,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    pidController.setP(kP);
-    pidController.setI(kI);
-    pidController.setD(kD);
-    pidController.setIZone(kIz);
-    pidController.setFF(kF);
-    pidController.setOutputRange(kMinOutput, kMaxOutput);
-
-    // display PID coefficients on SmartDashboard
-    SmartDashboard.putNumber("P Gain", kP);
-    SmartDashboard.putNumber("I Gain", kI);
-    SmartDashboard.putNumber("D Gain", kD);
-    SmartDashboard.putNumber("I Zone", kIz);
-    SmartDashboard.putNumber("Feed Forward", kF);
-    SmartDashboard.putNumber("Max Output", kMaxOutput);
-    SmartDashboard.putNumber("Min Output", kMinOutput);
-    SmartDashboard.putNumber("Target", targetSpeed);
+    firstTime = System.currentTimeMillis();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -156,21 +115,14 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-
-    // if PID coefficients on SmartDashboard have changed, write new values to controller
-    if((P != kP)) { pidController.setP(P); kP = P; }
-    if((I != kI)) { pidController.setI(I); kI = I; }
-    if((D != kD)) { pidController.setD(D); kD = D; }
-    if((Iz != kIz)) { pidController.setIZone(Iz); kIz = Iz; }
-    if((F != kF)) { pidController.setFF(F); kF = F; }
-    if((InTarget != targetSpeed)) { targetSpeed = InTarget; }
-    if((Max != kMaxOutput) || (Min != kMinOutput)) { 
-      pidController.setOutputRange(Min, Max);
-      kMinOutput = Min; kMaxOutput = Max;
+    currentTime = System.currentTimeMillis();
+    setSpeed = (double)((((currentTime - firstTime) / 1000) * 10) * 0.00021);
+    if (setSpeed < 1) {
+      motor1.set(setSpeed);
+    } else {
+      motor1.set(1);
     }
-
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-    pidController.setReference(targetSpeed, ControlType.kVelocity);
+    //motor1.set(((-1 * stick.getRawAxis(2)) + 1) / 2);
   }
 
   @Override
