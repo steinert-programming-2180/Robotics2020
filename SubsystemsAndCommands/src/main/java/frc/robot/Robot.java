@@ -8,24 +8,18 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import frc.robot.commands.IntakeC;
+import frc.robot.subsystems.Intake;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer rc;
   private Constants con;
-  
-  TalonSRX[] leftTals = new TalonSRX[3];
-  TalonSRX[] rightTals = new TalonSRX[3];
-  TalonSRX[] allTals = new TalonSRX[6];
-  double speedFactor = 1.0/3.0;
-  double turn = 0.2;
+  Intake inBalls = new Intake();
+  IntakeC intakeComm = new IntakeC(inBalls);
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -34,20 +28,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     rc = new RobotContainer();
-    con = new Constants();
-
-    for(int i = 0; i < con.leftPorts.length; i++){
-      int talonID = con.leftPorts[i];
-      leftTals[i] = new TalonSRX(talonID);
-      allTals[i] = leftTals[i];
-    }
-    
-    for(int i = 0; i < con.rightPorts.length; i++){
-      int talonID = con.rightPorts[i];
-      rightTals[i] = new TalonSRX(talonID);
-      allTals[i+2] = rightTals[i];
-    }
-
   }
 
   /**
@@ -106,6 +86,7 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
   }
 
   /**
@@ -113,16 +94,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    double forward = con.controller.getRawAxis(1);
-    double right = con.controller.getRawAxis(4);
-    double rightMove = right*0.2;
-
-    for(TalonSRX i : leftTals){
-      i.set(ControlMode.PercentOutput, forward*-(0.2-rightMove)+rightMove);
-    }
-    for(TalonSRX i : rightTals){
-      i.set(ControlMode.PercentOutput, forward*(0.2-rightMove)+rightMove);
-    }
+    
   }
 
   @Override

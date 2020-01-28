@@ -7,6 +7,7 @@
 
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import edu.wpi.first.wpilibj.XboxController;
@@ -20,16 +21,9 @@ import edu.wpi.first.wpilibj.XboxController;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
-    final int controllerPort = 0;
-    final int leftJoystick = 1;
-    final int rightJoystick = 5;
+    public static ControlMode talonCM = ControlMode.PercentOutput;
+    public final static XboxController controller = new XboxController(0);
 
-    final int[] leftPorts = {4, 5, 6};
-    final int[] rightPorts = {1, 2, 3};
-
-    TalonSRX[] leftTals = new TalonSRX[3];
-    TalonSRX[] rightTals = new TalonSRX[3];
-    TalonSRX[] allTals = new TalonSRX[6];
-
-    final XboxController controller = new XboxController(0);
+    public final int btnAPort = 1;
+    public final int btnXPort = 3;
 }
