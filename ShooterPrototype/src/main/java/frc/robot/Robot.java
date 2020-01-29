@@ -75,6 +75,15 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    SmartDashboard.putNumber("P Gain", kP);
+    SmartDashboard.putNumber("I Gain", kI);
+    SmartDashboard.putNumber("D Gain", kD);
+    SmartDashboard.putNumber("I Zone", kIz);
+    SmartDashboard.putNumber("Feed Forward", kF);
+    SmartDashboard.putNumber("Max Output", kMaxOutput);
+    SmartDashboard.putNumber("Min Output", kMinOutput);
+    SmartDashboard.putNumber("Target", targetSpeed);
+    
     P = SmartDashboard.getNumber("P Gain", 0);
     I = SmartDashboard.getNumber("I Gain", 0);
     D = SmartDashboard.getNumber("D Gain", 0);
@@ -83,12 +92,26 @@ public class Robot extends TimedRobot {
     Max = SmartDashboard.getNumber("Max Output", 0);
     Min = SmartDashboard.getNumber("Min Output", 0);
     InTarget = SmartDashboard.getNumber("Target", 0);
+
+    if((P != kP)) { pidController.setP(P); kP = P; }
+    if((I != kI)) { pidController.setI(I); kI = I; }
+    if((D != kD)) { pidController.setD(D); kD = D; }
+    if((Iz != kIz)) { pidController.setIZone(Iz); kIz = Iz; }
+    if((F != kF)) { pidController.setFF(F); kF = F; }
+    if((InTarget != targetSpeed)) { targetSpeed = InTarget; }
+    if((Max != kMaxOutput) || (Min != kMinOutput)) { 
+      pidController.setOutputRange(Min, Max);
+      kMinOutput = Min; kMaxOutput = Max;
+    }
+
+    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
+    SmartDashboard.putNumber("Voltage", motor1.getBusVoltage());
+    SmartDashboard.putNumber("AppliedPercent", motor1.getAppliedOutput());
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
     SmartDashboard.putNumber("Position", encoder.getPosition());
 
   }
@@ -134,14 +157,7 @@ public class Robot extends TimedRobot {
     pidController.setOutputRange(kMinOutput, kMaxOutput);
 
     // display PID coefficients on SmartDashboard
-    SmartDashboard.putNumber("P Gain", kP);
-    SmartDashboard.putNumber("I Gain", kI);
-    SmartDashboard.putNumber("D Gain", kD);
-    SmartDashboard.putNumber("I Zone", kIz);
-    SmartDashboard.putNumber("Feed Forward", kF);
-    SmartDashboard.putNumber("Max Output", kMaxOutput);
-    SmartDashboard.putNumber("Min Output", kMinOutput);
-    SmartDashboard.putNumber("Target", targetSpeed);
+    
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -158,18 +174,7 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
-    if((P != kP)) { pidController.setP(P); kP = P; }
-    if((I != kI)) { pidController.setI(I); kI = I; }
-    if((D != kD)) { pidController.setD(D); kD = D; }
-    if((Iz != kIz)) { pidController.setIZone(Iz); kIz = Iz; }
-    if((F != kF)) { pidController.setFF(F); kF = F; }
-    if((InTarget != targetSpeed)) { targetSpeed = InTarget; }
-    if((Max != kMaxOutput) || (Min != kMinOutput)) { 
-      pidController.setOutputRange(Min, Max);
-      kMinOutput = Min; kMaxOutput = Max;
-    }
-
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
+    
     pidController.setReference(targetSpeed, ControlType.kVelocity);
   }
 
