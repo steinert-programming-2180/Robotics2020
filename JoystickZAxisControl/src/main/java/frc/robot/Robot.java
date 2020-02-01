@@ -30,6 +30,7 @@ public class Robot extends TimedRobot {
   TalonSRX left;
   TalonSRX right;
 
+  double adjustedSpeed = 0;
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -107,9 +108,10 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    SmartDashboard.putNumber("Axis", joy.getRawAxis(2));
-    left.set(ControlMode.PercentOutput, -joy.getRawAxis(2));
-    right.set(ControlMode.PercentOutput, joy.getRawAxis(2));
+    adjustedSpeed = (joy.getRawAxis(2) + 1) * 0.5;
+    SmartDashboard.putNumber("Axis", adjustedSpeed);
+    left.set(ControlMode.PercentOutput, -1 * adjustedSpeed);
+    right.set(ControlMode.PercentOutput, adjustedSpeed);
   }
 
   @Override
