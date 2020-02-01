@@ -2,6 +2,7 @@ import cv2
 import numpy
 import math
 import colorsys
+import time
 from enum import Enum
 
 class GripPipeline:
@@ -109,25 +110,71 @@ gLine  = GripPipeline()
 cap = cv2.VideoCapture(0)
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
 
+xVals = [10000, -10000]
+yVals = [10000, -10000]
+
+corner1 = [xVals[0], yVals[0]]
+corner2 = [xVals[1], yVals[1]]
+
+def minMax(bRect):
+    if(bRect[0] < xVals[0]) :
+        xVals[0] = bRect[0]
+    if(bRect[1] < yVals[0]) :
+        yVals[0] = bRect[1]
+    if(bRect[2] > xVals[1]) :
+        xVals[1] = bRect[2]
+    if(bRect[3] > yVals[1]) :
+        yVals[1] = bRect[3]
+    
+    corner1 = [xVals[0], yVals[0]]
+    corner2 = [xVals[1], yVals[1]]
+
 while(True):
     # Capture frame-by-frame
-    ret, frame = cap.read()
-    
-    gLine.process(frame)
+    ret, src = cap.read()
+    startTime = time.time()
+    image = src
 
+    xVals = [10000, -10000]
+    yVals = [10000, -10000]
+
+    gLine.process(image)
+
+    contours = gLine.find_contours_output
+
+    contours_poly = [None]*len(contours)
+    boundRect = [None]*len(contours)
+
+    for i, c in enumerate(contours):
+        contours_poly[i] = cv2.approxPolyDP(c, 3, True)
+        boundRect[i] = cv2.boundingRect(contours_poly[i])
 
     i = 0
-    for contour in gLine.find_contours_output:
-
+    for contour in contours:
         r, g, b = colorsys.hsv_to_rgb(i,1,1)
-        cv2.drawContours(frame, [contour], 0, (b * 255, g * 255, r * 255), 2)
+        cv2.drawContours(image, [contour], 0, (b * 255, g * 255, r * 255), 2)
         i = i + 0.1
         if i > 1 :
             i = i - 1
     #postDilate = cv2.dilate(postErode, kernel, iterations=1)
 
+    c = 0
+    for i in range(len(contours)):
+        r, g, b = colorsys.hsv_to_rgb(c,1,1)
+        color = (255 * b, 255 * g, 255 * r)
+        c = c + 0.1
+        if c > 1:
+            c = 0
+        cv2.rectangle(image, (int(boundRect[i][0]), int(boundRect[i][1])), \
+          (int(boundRect[i][0]+boundRect[i][2]), int(boundRect[i][1]+boundRect[i][3])), color, 2)
+        
+        minMax([int(boundRect[i][0]), int(boundRect[i][1]), int(boundRect[i][0]+boundRect[i][2]), int(boundRect[i][1]+boundRect[i][3])])
+        
+    if(len(contours) > 0):
+        cv2.rectangle(image, (xVals[0], yVals[0]), (xVals[1], yVals[1]), (0, 255, 0), thickness=3)
     # Display the resulting frame
-    cv2.imshow('frame',frame)
+    cv2.imshow('frame',image)
+    print(time.time() - startTime)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 # When everything done, release the capture
