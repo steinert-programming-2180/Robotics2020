@@ -59,6 +59,7 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     SmartDashboard.putNumber("Velocity", encoder.getVelocity());
     SmartDashboard.putNumber("Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
+    
     SmartDashboard.putNumber("Axis" , ((((-1 * stick.getRawAxis(2)) + 1) / 2)));
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
@@ -115,6 +116,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    /*
     currentTime = System.currentTimeMillis();
     setSpeed = (double)((((currentTime - firstTime) / 1000) * 10) * 0.00021);
     if (setSpeed < 1) {
@@ -122,7 +124,8 @@ public class Robot extends TimedRobot {
     } else {
       motor1.set(1);
     }
-    //motor1.set(((-1 * stick.getRawAxis(2)) + 1) / 2);
+    */
+    motor1.set(((-1 * stick.getRawAxis(2)) + 1) / 2);
   }
 
   @Override
