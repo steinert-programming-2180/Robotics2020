@@ -183,12 +183,11 @@ while(True):
         dist = (knownWid * focalLength) / (xVals[1] - xVals[0])
         sum = sum + dist
         runs = runs + 1
-        if(runs % 6 == 0):
+        if(runs % 6 == 5):
             print(sum/runs)
-
-    if cv2.waitKey(1) & 0xFF == ord('r'):
-        sum = 0
-        runs = 0
+            sum = 0
+            runs = 0
+            
     # Display the resulting frame
     cv2.imshow('frame',image)
     #print(time.time() - startTime)
