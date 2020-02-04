@@ -31,6 +31,8 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
 
+  double axisVal = 0;
+
   long firstTime = 0;
   long currentTime = 0;
   double setSpeed;
@@ -104,7 +106,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    firstTime = System.currentTimeMillis();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -119,6 +120,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    axisVal = ((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0;
     /*
     currentTime = System.currentTimeMillis();
     setSpeed = (double)((((currentTime - firstTime) / 1000) * 10) * 0.00021);
@@ -128,9 +130,9 @@ public class Robot extends TimedRobot {
       motor1.set(1);
     }
     */
-    motor1.set(((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0);
-    motor2.set(-1 *(((-1 * stick.getRawAxis(2)) + 1) / 2));
-    SmartDashboard.putNumber("Axis", ((-1 * stick.getRawAxis(2)) + 1) / 2);
+    motor1.set(axisVal);
+    motor2.set(-1 * axisVal);
+    SmartDashboard.putNumber("Axis", axisVal);
     SmartDashboard.putNumber("Out", motor1.getAppliedOutput());
     SmartDashboard.putNumber("BusVoltage", motor1.getBusVoltage());
   }
