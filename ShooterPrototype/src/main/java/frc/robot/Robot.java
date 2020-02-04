@@ -14,6 +14,7 @@ import com.revrobotics.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,9 +30,14 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  CANSparkMax motor1 = new CANSparkMax(1, MotorType.kBrushless);
-  CANPIDController pidController = new CANPIDController(motor1);  //Possible Error
+  CANSparkMax motor1 = new CANSparkMax(5, MotorType.kBrushless);
+  //CANSparkMax motor2 = new CANSparkMax(6, MotorType.kBrushless);
+  CANPIDController pidController = new CANPIDController(motor1);
   CANEncoder encoder = new CANEncoder(motor1);
+
+  double modAxis;
+
+  Joystick stick = new Joystick(0);
 
   double kP;
   double kI;
@@ -61,6 +67,9 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     motor1.setIdleMode(IdleMode.kCoast);
+    //motor2.setIdleMode(IdleMode.kCoast);
+    //motor2.follow(motor1, true); //Sets to follow, and has 'inverted' set to true
+
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
@@ -90,7 +99,8 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
     SmartDashboard.putNumber("Velocity", encoder.getVelocity());
     SmartDashboard.putNumber("Position", encoder.getPosition());
-
+    SmartDashboard.putNumber("Speed", encoder.getVelocity());
+    SmartDashboard.putNumber("Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
   }
 
   /**
@@ -108,24 +118,30 @@ public class Robot extends TimedRobot {
    * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
    */
   @Override
-  public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
+  public void teleopInit() {
+    
   }
 
   /**
    * This function is called periodically during autonomous.
    */
   @Override
-  public void autonomousPeriodic() {
+  public void teleopPeriodic() {
+    SmartDashboard.putNumber("Axis", modAxis);
+    modAxis = (((-1*stick.getRawAxis(2)) +1) / 2);
+    motor1.set(modAxis);
   }
 
   @Override
-  public void teleopInit() {
+  public void autonomousInit() {
+
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+
+    // schedule the autonomous command (example)
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
+    }
+
     pidController.setP(kP);
     pidController.setI(kI);
     pidController.setD(kD);
@@ -155,7 +171,7 @@ public class Robot extends TimedRobot {
    * This function is called periodically during operator control.
    */
   @Override
-  public void teleopPeriodic() {
+  public void autonomousPeriodic() {
 
     // if PID coefficients on SmartDashboard have changed, write new values to controller
     if((P != kP)) { pidController.setP(P); kP = P; }

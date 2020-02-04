@@ -11,6 +11,7 @@ import java.util.Date;
 
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -33,7 +34,8 @@ public class Robot extends TimedRobot {
   long firstTime = 0;
   long currentTime = 0;
   double setSpeed;
-  CANSparkMax motor1 = new CANSparkMax(1, MotorType.kBrushless);
+  CANSparkMax motor1 = new CANSparkMax(5, MotorType.kBrushless);
+  CANSparkMax motor2 = new CANSparkMax(6, MotorType.kBrushless);
   CANEncoder encoder = new CANEncoder(motor1);
   Joystick stick = new Joystick(0);
 
@@ -43,6 +45,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    motor1.setIdleMode(IdleMode.kCoast);
+    motor2.setIdleMode(IdleMode.kCoast);
+    //motor2.follow(motor1, true);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
@@ -59,8 +64,6 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     SmartDashboard.putNumber("Velocity", encoder.getVelocity());
     SmartDashboard.putNumber("Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
-    
-    SmartDashboard.putNumber("Axis" , ((((-1 * stick.getRawAxis(2)) + 1) / 2)));
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -125,7 +128,11 @@ public class Robot extends TimedRobot {
       motor1.set(1);
     }
     */
-    motor1.set(((-1 * stick.getRawAxis(2)) + 1) / 2);
+    motor1.set(((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0);
+    motor2.set(-1 *(((-1 * stick.getRawAxis(2)) + 1) / 2));
+    SmartDashboard.putNumber("Axis", ((-1 * stick.getRawAxis(2)) + 1) / 2);
+    SmartDashboard.putNumber("Out", motor1.getAppliedOutput());
+    SmartDashboard.putNumber("BusVoltage", motor1.getBusVoltage());
   }
 
   @Override
