@@ -110,8 +110,6 @@ gLine  = GripPipeline()
 cap = cv2.VideoCapture(0)
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
 
-focalLength = 660.0
-
 knownWid = 14.625
 knownHgt = 5.875
 
@@ -209,8 +207,12 @@ width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 centerX = width/2-0.5
 centerY = height/2-0.5
-y_displacement = 3
 
+y_displacement = 3
+hFOV = 61
+vFOV = 34.3
+
+focalLength = width/(2*numpy.tan(numpy.radians(hFOV/2)))
 
 while(True):
     # Capture frame-by-frame
@@ -238,7 +240,6 @@ while(True):
 
         cv2.drawContours(image,[boxPoints],0,(0,0,255),2)
         cv2.circle(image, (int(x), int(y)), 4, (0, 0, 255))
-
 
         distance = y_displacement/numpy.tan(numpy.radians(y_angle))
 

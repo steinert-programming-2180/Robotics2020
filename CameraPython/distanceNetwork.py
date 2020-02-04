@@ -4,6 +4,28 @@ import math
 import colorsys
 import time
 from enum import Enum
+import threading
+from networktables import NetworkTables
+
+cond = threading.Condition()
+notified = [False]
+
+def connectionListener(connected, info):
+    print(info, '; Connected=%s' % connected)
+    with cond:
+        notified[0] = True
+        cond.notify()
+
+NetworkTables.initialize(server='10.25.64.208')
+NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
+
+with cond:
+    print("Waiting")
+    if not notified[0]:
+        cond.wait()
+
+table = NetworkTables.getTable('SmartDashboard')\
+distanceLabel = "Distance"
 
 class GripPipeline:
     """
@@ -14,9 +36,9 @@ class GripPipeline:
         """initializes all values to presets or None if need to be set
         """
 
-        self.__hsv_threshold_hue = [20.0, 90.0]
-        self.__hsv_threshold_saturation = [60.0, 255.0]
-        self.__hsv_threshold_value = [100.0, 255.0]
+        self.__hsv_threshold_hue = [32.0, 85.0]
+        self.__hsv_threshold_saturation = [98.0, 255.0]
+        self.__hsv_threshold_value = [80.0, 255.0]
 
         self.hsv_threshold_output = None
 
@@ -110,12 +132,6 @@ gLine  = GripPipeline()
 cap = cv2.VideoCapture(0)
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
 
-focalLength = 660.0
-
-knownWid = 14.625
-knownHgt = 5.875
-
-'''
 xVals = [10000, -10000]
 yVals = [10000, -10000]
 
@@ -123,7 +139,8 @@ corner1 = [xVals[0], yVals[0]]
 corner2 = [xVals[1], yVals[1]]
 
 knownDist = 24.0
-
+knownWid = 14.625
+focalLength = 660.0
 
 runs = 0
 sum = 0
@@ -185,72 +202,20 @@ while(True):
 
     if(len(contours) > 0):
         cv2.rectangle(image, (xVals[0], yVals[0]), (xVals[1], yVals[1]), (0, 255, 0), thickness=3)
-        #dist = (knownWid * focalLength) / (xVals[1] - xVals[0])
-        #dist = (knownHgt * focalLength) / (yVals[1] - yVals[0])
+        dist = (knownWid * focalLength) / (xVals[1] - xVals[0])
         sum = sum + dist
         runs = runs + 1
-        if(runs % 6 == 5):
-            print(round(sum/runs, 3))
+        if(runs % 10 == 9):
+            table.putNumber(distanceLabel, sum/runs)
             sum = 0
             runs = 0
             
     # Display the resulting frame
-    cv2.imshow('frame',image)
+    #cv2.imshow('frame',image)
     #print(time.time() - startTime)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+    #if cv2.waitKey(1) & 0xFF == ord('q'):
+        #break
 # When everything done, release the capture
 cap.release()
-cv2.destroyAllWindows()
-'''
-
-width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-centerX = width/2-0.5
-centerY = height/2-0.5
-y_displacement = 3
-
-
-while(True):
-    # Capture frame-by-frame
-    ret, src = cap.read()
-    startTime = time.time()
-    image = src
-
-    gLine.process(image)
-
-    contours = gLine.find_contours_output
-
-    x_angle_table = []
-    distance_table = []
-
-    for contour in contours:
-        rect = cv2.minAreaRect(contour)
-        point, dimensions, angle = rect
-        boxPoints = cv2.boxPoints(rect)
-        
-        boxPoints = numpy.int0(boxPoints)
-        x, y = numpy.sum(boxPoints, axis = 0)/4
-        
-        x_angle = numpy.degrees(numpy.arctan((centerX-x)/focalLength))
-        y_angle = numpy.degrees(numpy.arctan((centerY-y)/focalLength))
-
-        cv2.drawContours(image,[boxPoints],0,(0,0,255),2)
-        cv2.circle(image, (int(x), int(y)), 4, (0, 0, 255))
-
-
-        distance = y_displacement/numpy.tan(numpy.radians(y_angle))
-
-        x_angle_table.append(x_angle)
-        distance_table.append(distance)
-
-    # Display the resulting frame
-    cv2.imshow('frame',image)
-    print(time.time() - startTime)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-# When everything done, release the capture
-cap.release()
-cv2.destroyAllWindows()
+#cv2.destroyAllWindows()
