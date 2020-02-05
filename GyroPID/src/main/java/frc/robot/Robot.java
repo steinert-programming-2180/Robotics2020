@@ -9,17 +9,13 @@ package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.IdleMode;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -31,42 +27,36 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  
-  CANSparkMax[] leftMotors = new CANSparkMax[3];
-  CANSparkMax[] rightMotors = new CANSparkMax[3];
-  XboxController controller;
-  double speedFactor = 1.0/3.0;
+  Joystick leftJoy;
+  Joystick rightJoy;
+  TalonSRX[] leftMotors = new TalonSRX[3];
+  TalonSRX[] rightMotors = new TalonSRX[3];
+
+  double Kp, Ki, Kd = 1;
+  double integral, previous_error, setpoint = 0;
+  PIDController pidContr = new PIDController(Kp, Ki, Kd);
 
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   @Override
-  
   public void robotInit() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-
-    controller = new XboxController(0);
-
-    for(int i = 0; i < 6; i++){
-      CANSparkMax motor = new CANSparkMax(i+1, MotorType.kBrushless);
-      if(i < 3){
-        leftMotors[i] = motor;
-      } else{
-        rightMotors[i-3] = motor;
-      }
-    }
-
-    for(CANSparkMax i : leftMotors){
-      i.setIdleMode(IdleMode.kCoast);
-    }
-
-    for(CANSparkMax i : rightMotors){
-      i.setIdleMode(IdleMode.kCoast);
-    }
-    
     m_robotContainer = new RobotContainer();
+    leftJoy = new Joystick(0);
+    rightJoy = new Joystick(1);
+
+    for(int i = 1; i < 4; i++){
+      TalonSRX currentTal = new TalonSRX(i);
+      rightMotors[i-1] = currentTal;
+    }
+
+    for(int i = 4; i < 7; i++){
+      TalonSRX currentTal = new TalonSRX(i);
+      leftMotors[i-4] = currentTal;
+    }
   }
 
   /**
@@ -132,19 +122,17 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    double moveForward = controller.getRawAxis(1);
-    double rotate = controller.getRawAxis(4)*0.1;
+    
+    for(TalonSRX i : leftMotors){
+      i.set(ControlMode.PercentOutput, -leftJoy.getRawAxis(1));
+    }
 
-    for(CANSparkMax i : leftMotors){
-      double localRot = 0.0;
-      if(rotate > 0){localRot = rotate;}
-      i.set(-moveForward*speedFactor+localRot);
+    for(TalonSRX i : rightMotors){
+      i.set(ControlMode.PercentOutput, rightJoy.getRawAxis(1));
     }
-    for(CANSparkMax i : rightMotors){
-      double localRot = 0.0;
-      if(rotate < 0){localRot = rotate;}
-      i.set(moveForward*speedFactor+localRot);
-    }
+
+    SmartDashboard.putNumber("VelocityError", pidContr.getVelocityError());
+
   }
 
   @Override

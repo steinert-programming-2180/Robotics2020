@@ -7,11 +7,8 @@
 
 package frc.robot;
 
-import java.util.Date;
-
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -31,15 +28,15 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
 
-  double axisVal = 0;
+  double axisVal;
 
   long firstTime = 0;
   long currentTime = 0;
-  double setSpeed;
-  CANSparkMax motor1 = new CANSparkMax(5, MotorType.kBrushless);
-  CANSparkMax motor2 = new CANSparkMax(6, MotorType.kBrushless);
-  CANEncoder encoder = new CANEncoder(motor1);
-  Joystick stick = new Joystick(0);
+  CANSparkMax motor1;
+  CANSparkMax motor2;
+  CANEncoder encoder1;
+  CANEncoder encoder2;
+  Joystick stick;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -47,11 +44,15 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    motor1.setIdleMode(IdleMode.kCoast);
-    motor2.setIdleMode(IdleMode.kCoast);
+    motor1 = new CANSparkMax(5, MotorType.kBrushless);
+    motor2 = new CANSparkMax(6, MotorType.kBrushless);
+    encoder1 = new CANEncoder(motor1);
+    encoder2 = new CANEncoder(motor2);
+    stick = new Joystick(0);
+
+    //motor1.setIdleMode(IdleMode.kCoast);
+    //motor2.setIdleMode(IdleMode.kCoast);
     //motor2.follow(motor1, true);
-    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
   }
 
@@ -64,8 +65,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-    SmartDashboard.putNumber("Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
+    
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -120,8 +120,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    axisVal = ((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0;
+    axisVal = ((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0; //((-1.0 * stick.getRawAxis(1)) + 1.0) / 2.0
     /*
+  
     currentTime = System.currentTimeMillis();
     setSpeed = (double)((((currentTime - firstTime) / 1000) * 10) * 0.00021);
     if (setSpeed < 1) {
@@ -130,11 +131,15 @@ public class Robot extends TimedRobot {
       motor1.set(1);
     }
     */
-    motor1.set(axisVal);
-    motor2.set(-1 * axisVal);
+
+    motor1.set(-1* axisVal);
+    motor2.set(axisVal);
+
     SmartDashboard.putNumber("Axis", axisVal);
     SmartDashboard.putNumber("Out", motor1.getAppliedOutput());
     SmartDashboard.putNumber("BusVoltage", motor1.getBusVoltage());
+    SmartDashboard.putNumber("Vel1", encoder1.getVelocity());
+    SmartDashboard.putNumber("Vel2", encoder2.getVelocity());
   }
 
   @Override
