@@ -6,16 +6,18 @@
 /*----------------------------------------------------------------------------*/
 
 package frc.robot;
-
-import com.revrobotics.CANEncoder;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Solenoid;
+
+            
+//import edu.wpi.first.wpilibj.Victor; don't know
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -27,34 +29,27 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-
-  double axisVal;
-
-  long firstTime = 0;
-  long currentTime = 0;
-  CANSparkMax motor1;
-  CANSparkMax motor2;
-  CANEncoder encoder1;
-  CANEncoder encoder2;
-  Joystick stick;
-
+  Joystick joy1; 
+  //Victor victor; don't know 
+  //Compressor c;
+  DoubleSolenoid solTest;
+  
+  
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   @Override
   public void robotInit() {
-    motor1 = new CANSparkMax(5, MotorType.kBrushless);
-    motor2 = new CANSparkMax(6, MotorType.kBrushless);
-    encoder1 = new CANEncoder(motor1);
-    encoder2 = new CANEncoder(motor2);
-    stick = new Joystick(0);
-
-    //motor1.setIdleMode(IdleMode.kCoast);
-    //motor2.setIdleMode(IdleMode.kCoast);
-    //motor2.follow(motor1, true);
+    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
+    // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-  }
+    joy1 = new Joystick(0);
+    c = new Compressor();    
+    
+    solTest = new DoubleSolenoid(0, 1);
+    c.start(); 
+   }
 
   /**
    * This function is called every robot packet, no matter the mode. Use this for items like
@@ -65,7 +60,6 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -120,26 +114,14 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    axisVal = ((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0; //((-1.0 * stick.getRawAxis(1)) + 1.0) / 2.0
-    /*
-  
-    currentTime = System.currentTimeMillis();
-    setSpeed = (double)((((currentTime - firstTime) / 1000) * 10) * 0.00021);
-    if (setSpeed < 1) {
-      motor1.set(setSpeed);
-    } else {
-      motor1.set(1);
+   
+    if(joy1.getRawButtonPressed(8)) {
+      solTest.set(DoubleSolenoid.Value.kForward);
+      SmartDashboard.putString("Testing", "8 is pressed");
+    }else if(joy1.getRawButtonPressed(9)){
+      solTest.set(DoubleSolenoid.Value.kReverse);
+      SmartDashboard.putString("Testing", "9 is pressed");
     }
-    */
-
-    motor1.set(-1* axisVal);
-    motor2.set(axisVal);
-
-    SmartDashboard.putNumber("Axis", axisVal);
-    SmartDashboard.putNumber("Out", motor1.getAppliedOutput());
-    SmartDashboard.putNumber("BusVoltage", motor1.getBusVoltage());
-    SmartDashboard.putNumber("Vel1", encoder1.getVelocity());
-    SmartDashboard.putNumber("Vel2", encoder2.getVelocity());
   }
 
   @Override
