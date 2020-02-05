@@ -7,8 +7,6 @@
 
 package frc.robot;
 
-import java.util.Date;
-
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -31,13 +29,10 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
 
-  long firstTime = 0;
-  long currentTime = 0;
-  double setSpeed;
-  CANSparkMax motor1 = new CANSparkMax(5, MotorType.kBrushless);
-  CANSparkMax motor2 = new CANSparkMax(6, MotorType.kBrushless);
-  CANEncoder encoder = new CANEncoder(motor1);
-  Joystick stick = new Joystick(0);
+  CANSparkMax motor1;
+  CANSparkMax motor2;
+  CANEncoder encoder;
+  Joystick stick;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -45,8 +40,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    motor1.setIdleMode(IdleMode.kCoast);
-    motor2.setIdleMode(IdleMode.kCoast);
+    motor1 = new CANSparkMax(5, MotorType.kBrushless);
+    motor2 = new CANSparkMax(6, MotorType.kBrushless);
+    encoder = new CANEncoder(motor1);
+    stick = new Joystick(0);
+    // motor1.setIdleMode(IdleMode.kCoast);
+    // motor2.setIdleMode(IdleMode.kCoast);
     //motor2.follow(motor1, true);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
@@ -62,8 +61,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-    SmartDashboard.putNumber("Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
+    
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -104,7 +102,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    firstTime = System.currentTimeMillis();
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -128,11 +125,9 @@ public class Robot extends TimedRobot {
       motor1.set(1);
     }
     */
-    motor1.set(((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0);
-    motor2.set(-1 *(((-1 * stick.getRawAxis(2)) + 1) / 2));
-    SmartDashboard.putNumber("Axis", ((-1 * stick.getRawAxis(2)) + 1) / 2);
-    SmartDashboard.putNumber("Out", motor1.getAppliedOutput());
-    SmartDashboard.putNumber("BusVoltage", motor1.getBusVoltage());
+    motor1.set(0.5); // ((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0
+    motor2.set(-0.5); // -1 *(((-1 * stick.getRawAxis(2)) + 1) / 2)
+    
   }
 
   @Override
