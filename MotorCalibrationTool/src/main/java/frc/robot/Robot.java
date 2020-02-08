@@ -32,10 +32,13 @@ public class Robot extends TimedRobot {
 
   long firstTime = 0;
   long currentTime = 0;
+  double setSpeed;
   CANSparkMax motor1;
   CANSparkMax motor2;
+  CANSparkMax motor3;
   CANEncoder encoder1;
   CANEncoder encoder2;
+  CANEncoder encoder3;
   Joystick stick;
 
   /**
@@ -44,10 +47,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    motor1 = new CANSparkMax(5, MotorType.kBrushless);
-    motor2 = new CANSparkMax(6, MotorType.kBrushless);
+    motor1 = new CANSparkMax(1, MotorType.kBrushless);
+    motor2 = new CANSparkMax(2, MotorType.kBrushless);
+    motor3 = new CANSparkMax(3, MotorType.kBrushless);
     encoder1 = new CANEncoder(motor1);
     encoder2 = new CANEncoder(motor2);
+    encoder3 = new CANEncoder(motor3);
     stick = new Joystick(0);
 
     //motor1.setIdleMode(IdleMode.kCoast);
@@ -65,6 +70,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    SmartDashboard.putNumber("Axis", axisVal);
+    SmartDashboard.putNumber("Out", motor1.getAppliedOutput());
+    SmartDashboard.putNumber("BusVoltage", motor1.getBusVoltage());
+    SmartDashboard.putNumber("Applied Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
+    SmartDashboard.putNumber("Vel1", encoder1.getVelocity());
+    SmartDashboard.putNumber("Vel2", encoder2.getVelocity());
     
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
@@ -121,25 +132,26 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     axisVal = ((-1.0 * stick.getRawAxis(2)) + 1.0) / 2.0; //((-1.0 * stick.getRawAxis(1)) + 1.0) / 2.0
-    /*
+    
   
     currentTime = System.currentTimeMillis();
     setSpeed = (double)((((currentTime - firstTime) / 1000) * 10) * 0.00021);
-    if (setSpeed < 1) {
-      motor1.set(setSpeed);
-    } else {
-      motor1.set(1);
-    }
-    */
+    // if (setSpeed < 1) {
+    //   motor1.set(setSpeed);
+    // } else {
+    //   motor1.set(-1*axisVal);
+    // }
 
-    motor1.set(-1* axisVal);
-    motor2.set(axisVal);
+    motor1.set(axisVal);
+    motor2.set(-1 * axisVal);
 
     SmartDashboard.putNumber("Axis", axisVal);
     SmartDashboard.putNumber("Out", motor1.getAppliedOutput());
     SmartDashboard.putNumber("BusVoltage", motor1.getBusVoltage());
+    SmartDashboard.putNumber("Applied Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
     SmartDashboard.putNumber("Vel1", encoder1.getVelocity());
     SmartDashboard.putNumber("Vel2", encoder2.getVelocity());
+    SmartDashboard.putNumber("Current", motor1.getOutputCurrent());
   }
 
   @Override
@@ -153,5 +165,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void testPeriodic() {
+    motor3.set(stick.getRawAxis(2));
+    SmartDashboard.putNumber("Vel1", encoder3.getVelocity());
   }
 }
