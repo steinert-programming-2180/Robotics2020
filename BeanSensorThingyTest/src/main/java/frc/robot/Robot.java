@@ -6,16 +6,17 @@
 /*----------------------------------------------------------------------------*/
 
 package frc.robot;
-import edu.wpi.first.wpilibj.Joystick;
+
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DigitalInput;
 
-            
-//import edu.wpi.first.wpilibj.Victor; don't know
+
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -27,12 +28,10 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  Joystick joy1; 
-  //Victor victor; don't know 
-  Compressor c;
+  DigitalInput input0;
+  DigitalInput input1;
   DoubleSolenoid solTest;
-  
-  
+  Compressor c;
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -42,12 +41,12 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-    joy1 = new Joystick(0);
-    c = new Compressor();    
-    
-    solTest = new DoubleSolenoid(0, 1);
+     input0 = new DigitalInput(0);
+     input1 = new DigitalInput(1);
+     c = new Compressor();
+     solTest = new DoubleSolenoid(0, 1);
     c.start();
-   }
+  }
 
   /**
    * This function is called every robot packet, no matter the mode. Use this for items like
@@ -98,7 +97,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    // This makes sure that the autonomous stops running when
+    // This makes sure that the autonomous sstops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
@@ -112,19 +111,15 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-   
-    if(joy1.getRawButtonPressed(8)) {
+    if (input0.get()) {
+      SmartDashboard.putString("Testing", "Open");
       solTest.set(DoubleSolenoid.Value.kForward);
-      SmartDashboard.putString("Testing", "8 is pressed");
-    }else if(joy1.getRawButtonPressed(9)){
+    } else {
+      SmartDashboard.putString("Testing", "Closed");
       solTest.set(DoubleSolenoid.Value.kReverse);
-      SmartDashboard.putString("Testing", "9 is pressed");
-    } else { 
-      solTest.set(DoubleSolenoid.Value.kOff);
-      
-     }
+    }
+   
   }
-  
 
   @Override
   public void testInit() {
