@@ -8,13 +8,11 @@
 package frc.robot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.Solenoid;
 
             
 //import edu.wpi.first.wpilibj.Victor; don't know
@@ -31,7 +29,7 @@ public class Robot extends TimedRobot {
   private RobotContainer m_robotContainer;
   Joystick joy1; 
   //Victor victor; don't know 
-  //Compressor c;
+  Compressor c;
   DoubleSolenoid solTest;
   
   
@@ -121,8 +119,10 @@ public class Robot extends TimedRobot {
     }else if(joy1.getRawButtonPressed(9)){
       solTest.set(DoubleSolenoid.Value.kReverse);
       SmartDashboard.putString("Testing", "9 is pressed");
-    }
+     }else
+     solTest.set(DoubleSolenoid.Value.kOff);
   }
+  
 
   @Override
   public void testInit() {
