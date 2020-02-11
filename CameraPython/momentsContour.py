@@ -14,9 +14,9 @@ class GripPipeline:
         """initializes all values to presets or None if need to be set
         """
 
-        self.__hsv_threshold_hue = [20.0, 90.0]
-        self.__hsv_threshold_saturation = [60.0, 255.0]
-        self.__hsv_threshold_value = [100.0, 255.0]
+        self.__hsv_threshold_hue = [20.0, 100.0]
+        self.__hsv_threshold_saturation = [100.0, 255.0]
+        self.__hsv_threshold_value = [60.0, 255.0]
 
         self.hsv_threshold_output = None
 
@@ -121,6 +121,13 @@ vFOV = 34.3
 
 focalLength = width/(2*numpy.tan(numpy.radians(hFOV/2)))
 
+
+upperL = (1000, 1000)
+lowerR = (-1000, -1000)
+
+maxDist = -100000
+minDist = 100000
+
 while(True):
     # Capture frame-by-frame
     ret, src = cap.read()
@@ -129,8 +136,43 @@ while(True):
 
     gLine.process(image)
 
+    # create hull array for convex hull points
+    hull = []
+ 
+    contours = gLine.find_contours_output
+
+    maxSize = 0
+
+    index = 0
+    i = 0
+
+    for c in contours:
+        size = cv2.contourArea(c)
+        if(size > maxSize) :
+            maxSize = size
+            index = i
+        i = i + 1
+
+    cv2.drawContours(image, contours, index, (0, 255, 0), 1, 8)
+
+    hull.append(cv2.convexHull(contours[index], False))
+
+    for h in hull[i]:
+        x = h[0][0]
+        y = h[0][1]
+        dist = math.sqrt(math.pow(x, 2) + math.pow(y, 2))
+        if(dist > maxDist):
+            lowerR = (x, y)
+            maxDist = dist
+        elif(dist < minDist):
+            upperL = (x, y)
+            minDist = dist
+            
+            
+
+
     # Display the resulting frame
-    cv2.imshow('frame',filteredImg)
+    cv2.imshow('frame',image)
     #print(time.time() - startTime)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
