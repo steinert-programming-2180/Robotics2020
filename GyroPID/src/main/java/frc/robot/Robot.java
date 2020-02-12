@@ -9,8 +9,11 @@ package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.kauailabs.navx.frc.AHRS;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -27,15 +30,16 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  Joystick leftJoy;
-  Joystick rightJoy;
-  TalonSRX[] leftMotors = new TalonSRX[3];
-  TalonSRX[] rightMotors = new TalonSRX[3];
-
-  double Kp, Ki, Kd = 1;
+  TalonSRX left1, left2, left3;
+  TalonSRX right1, right2, right3;
+  TalonSRX[] leftMotors;
+  TalonSRX[] rightMotors;
+  AHRS ahrs;
+  ControlMode cm = ControlMode.PercentOutput;
+  double Kp, Ki, Kd = 1.0;
   double integral, previous_error, setpoint = 0;
-  PIDController pidContr = new PIDController(Kp, Ki, Kd);
-
+  PIDController controller = new PIDController(Kp, Ki, Kd);
+  
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -45,18 +49,26 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-    leftJoy = new Joystick(0);
-    rightJoy = new Joystick(1);
 
-    for(int i = 1; i < 4; i++){
-      TalonSRX currentTal = new TalonSRX(i);
-      rightMotors[i-1] = currentTal;
-    }
+    ahrs = new AHRS(SPI.Port.kMXP);
+    left1 = new TalonSRX(1);
+    left2 = new TalonSRX(2);
+    left3 = new TalonSRX(3);
+    right1 = new TalonSRX(4);
+    right2 = new TalonSRX(5);
+    right3 = new TalonSRX(6);
 
-    for(int i = 4; i < 7; i++){
-      TalonSRX currentTal = new TalonSRX(i);
-      leftMotors[i-4] = currentTal;
-    }
+    leftMotors[0] = left1;
+    leftMotors[1] = left2;
+    leftMotors[2] = left3;
+
+    rightMotors[0] = right1;
+    rightMotors[1] = right2;
+    rightMotors[2] = right3;
+    controller.setTolerance(10);
+    controller.enableContinuousInput(-1, 1);
+    left1.set(cm, controller.calculate(1.0));
+    ahrs.getAngle();
   }
 
   /**
@@ -73,37 +85,6 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-  }
-
-  /**
-   * This function is called once each time the robot enters Disabled mode.
-   */
-  @Override
-  public void disabledInit() {
-  }
-
-  @Override
-  public void disabledPeriodic() {
-  }
-
-  /**
-   * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
-   */
-  @Override
-  public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
-  }
-
-  /**
-   * This function is called periodically during autonomous.
-   */
-  @Override
-  public void autonomousPeriodic() {
   }
 
   @Override
@@ -123,17 +104,40 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     
-    for(TalonSRX i : leftMotors){
-      i.set(ControlMode.PercentOutput, -leftJoy.getRawAxis(1));
-    }
-
-    for(TalonSRX i : rightMotors){
-      i.set(ControlMode.PercentOutput, rightJoy.getRawAxis(1));
-    }
-
-    SmartDashboard.putNumber("VelocityError", pidContr.getVelocityError());
 
   }
+
+    /**
+   * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
+   */
+  @Override
+  public void autonomousInit() {
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+
+    // schedule the autonomous command (example)
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
+    }
+  }
+
+  /**
+   * This function is called periodically during autonomous.
+   */
+  @Override
+  public void autonomousPeriodic() {
+  }
+
+  /**
+   * This function is called once each time the robot enters Disabled mode.
+   */
+  @Override
+  public void disabledInit() {
+  }
+
+  @Override
+  public void disabledPeriodic() {
+  }
+
 
   @Override
   public void testInit() {
