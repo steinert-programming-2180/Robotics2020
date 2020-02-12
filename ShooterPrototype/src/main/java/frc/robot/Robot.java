@@ -11,7 +11,8 @@ import com.revrobotics.CANEncoder;
 import com.revrobotics.CANPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.ControlType;
-import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.EncoderType;
+import com.revrobotics.SparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -30,35 +31,21 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  CANSparkMax motor1 = new CANSparkMax(5, MotorType.kBrushless);
-  //CANSparkMax motor2 = new CANSparkMax(6, MotorType.kBrushless);
-  CANPIDController pidController = new CANPIDController(motor1);
-  CANEncoder encoder = new CANEncoder(motor1);
 
-  double modAxis;
+  public double rpm;
 
-  Joystick stick = new Joystick(0);
+  private CANSparkMax m_motor;
+  private CANSparkMax m_motor2;
+  private CANPIDController m_pidController;
+  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput;
 
-  double kP;
-  double kI;
-  double kD;
-  double kF;
-  double kIz;
-  double kMaxOutput;
-  double kMinOutput;
-
-  double P;
-  double I;
-  double D;
-  double F;
-  double Iz;
-  double Max;
-  double Min;
-  double InTarget;
-
-  double targetSpeed;
-
-
+  /**
+   * A CANEncoder object is constructed using the GetEncoder() method on an 
+   * existing CANSparkMax object. The assumed encoder type is the hall effect,
+   * or a sensor type and counts per revolution can be passed in to specify
+   * a different kind of sensor. Here, it's a quadrature encoder with 4096 CPR.
+   */
+  private CANEncoder m_encoder;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -66,12 +53,48 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    motor1.setIdleMode(IdleMode.kCoast);
-    //motor2.setIdleMode(IdleMode.kCoast);
-    //motor2.follow(motor1, true); //Sets to follow, and has 'inverted' set to true
-
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
+    // initialize SPARK MAX with CAN ID
+    rpm = 50;
+
+    m_motor = new CANSparkMax(1, MotorType.kBrushless);
+    m_motor2 = new CANSparkMax(6, MotorType.kBrushless);
+    m_encoder = m_motor.getEncoder(EncoderType.kHallSensor, 4096);
+    m_motor2.follow(m_motor, true);
+    
+    /**
+     * In order to use PID functionality for a controller, a CANPIDController object
+     * is constructed by calling the getPIDController() method on an existing
+     * CANSparkMax object
+     */
+    m_pidController = m_motor.getPIDController();
+  
+    /**
+     * The PID Controller can be configured to use the analog sensor as its feedback
+     * device with the method SetFeedbackDevice() and passing the PID Controller
+     * the CANAnalog object. 
+     */
+    m_pidController.setFeedbackDevice(m_encoder);
+
+    // PID coefficients
+    kP = 0.0615; 
+    kI = 0.0;
+    kD = 0.0; 
+    kIz = 0.0; 
+    kFF = 0.00021; 
+    kMaxOutput = 1.0; 
+    kMinOutput = -1.0;
+
+    // set PID coefficients
+    m_pidController.setP(kP);
+    m_pidController.setI(kI);
+    m_pidController.setD(kD);
+    m_pidController.setIZone(kIz);
+    m_pidController.setFF(kFF);
+    m_pidController.setOutputRange(kMinOutput, kMaxOutput);
+    //m_motor.pidWrite(output);
+
     m_robotContainer = new RobotContainer();
   }
 
@@ -84,23 +107,11 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    P = SmartDashboard.getNumber("P Gain", 0);
-    I = SmartDashboard.getNumber("I Gain", 0);
-    D = SmartDashboard.getNumber("D Gain", 0);
-    Iz = SmartDashboard.getNumber("I Zone", 0);
-    F = SmartDashboard.getNumber("Feed Forward", 0);
-    Max = SmartDashboard.getNumber("Max Output", 0);
-    Min = SmartDashboard.getNumber("Min Output", 0);
-    InTarget = SmartDashboard.getNumber("Target", 0);
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-    SmartDashboard.putNumber("Position", encoder.getPosition());
-    SmartDashboard.putNumber("Speed", encoder.getVelocity());
-    SmartDashboard.putNumber("Voltage", motor1.getAppliedOutput() * motor1.getBusVoltage());
   }
 
   /**
@@ -118,46 +129,24 @@ public class Robot extends TimedRobot {
    * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
    */
   @Override
-  public void teleopInit() {
-    
-  }
-
-  /**
-   * This function is called periodically during autonomous.
-   */
-  @Override
-  public void teleopPeriodic() {
-    SmartDashboard.putNumber("Axis", modAxis);
-    modAxis = (((-1*stick.getRawAxis(2)) +1) / 2);
-    motor1.set(modAxis);
-  }
-
-  @Override
   public void autonomousInit() {
-
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
+  }
 
-    pidController.setP(kP);
-    pidController.setI(kI);
-    pidController.setD(kD);
-    pidController.setIZone(kIz);
-    pidController.setFF(kF);
-    pidController.setOutputRange(kMinOutput, kMaxOutput);
+  /**
+   * This function is called periodically during autonomous.
+   */
+  @Override
+  public void autonomousPeriodic() {
+  }
 
-    // display PID coefficients on SmartDashboard
-    SmartDashboard.putNumber("P Gain", kP);
-    SmartDashboard.putNumber("I Gain", kI);
-    SmartDashboard.putNumber("D Gain", kD);
-    SmartDashboard.putNumber("I Zone", kIz);
-    SmartDashboard.putNumber("Feed Forward", kF);
-    SmartDashboard.putNumber("Max Output", kMaxOutput);
-    SmartDashboard.putNumber("Min Output", kMinOutput);
-    SmartDashboard.putNumber("Target", targetSpeed);
+  @Override
+  public void teleopInit() {
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -171,24 +160,23 @@ public class Robot extends TimedRobot {
    * This function is called periodically during operator control.
    */
   @Override
-  public void autonomousPeriodic() {
+  public void teleopPeriodic() {
 
-    // if PID coefficients on SmartDashboard have changed, write new values to controller
-    if((P != kP)) { pidController.setP(P); kP = P; }
-    if((I != kI)) { pidController.setI(I); kI = I; }
-    if((D != kD)) { pidController.setD(D); kD = D; }
-    if((Iz != kIz)) { pidController.setIZone(Iz); kIz = Iz; }
-    if((F != kF)) { pidController.setFF(F / motor1.getBusVoltage()); kF = F; }
-    if((InTarget != targetSpeed)) { targetSpeed = InTarget; }
-    if((Max != kMaxOutput) || (Min != kMinOutput)) { 
-      pidController.setOutputRange(Min, Max);
-      kMinOutput = Min; kMaxOutput = Max;
-    }
-
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-    SmartDashboard.putNumber("Applied Percent", motor1.getAppliedOutput());
-    pidController.setFF(F / motor1.getBusVoltage()); kF = F;
-    pidController.setReference(targetSpeed, ControlType.kVelocity);
+    /**
+     * PIDController objects are commanded to a set point using the 
+     * SetReference() method.
+     * 
+     * The first parameter is the value of the set point, whose units vary
+     * depending on the control type set in the second parameter.
+     * 
+     * The second parameter is the control type can be set to one of four 
+     * parameters:
+     *  com.revrobotics.ControlType.kDutyCycle
+     *  com.revrobotics.ControlType.kPosition
+     *  com.revrobotics.ControlType.kVelocity
+     *  com.revrobotics.ControlType.kVoltage
+     */
+    m_pidController.setReference(rpm, ControlType.kVelocity);
   }
 
   @Override

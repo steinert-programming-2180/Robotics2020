@@ -29,8 +29,9 @@ public class Robot extends TimedRobot {
   private RobotContainer m_robotContainer;
   Joystick leftJoy;
   Joystick rightJoy;
-  TalonSRX[] leftMotors = new TalonSRX[3];
-  TalonSRX[] rightMotors = new TalonSRX[3];
+  TalonSRX[] leftMotors;
+  TalonSRX[] rightMotors;
+  TalonSRX left1, left2, left3, right1, right2, right3;
 
   double Kp, Ki, Kd = 1;
   double integral, previous_error, setpoint = 0;
@@ -42,21 +43,18 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    leftMotors[0] = new TalonSRX(1);
+    leftMotors[1] = new TalonSRX(2);
+    leftMotors[2] = new TalonSRX(3);
+
+    rightMotors[0] = new TalonSRX(4);
+    rightMotors[1] = new TalonSRX(5);
+    rightMotors[2] = new TalonSRX(6);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
     leftJoy = new Joystick(0);
     rightJoy = new Joystick(1);
-
-    for(int i = 1; i < 4; i++){
-      TalonSRX currentTal = new TalonSRX(i);
-      rightMotors[i-1] = currentTal;
-    }
-
-    for(int i = 4; i < 7; i++){
-      TalonSRX currentTal = new TalonSRX(i);
-      leftMotors[i-4] = currentTal;
-    }
   }
 
   /**
