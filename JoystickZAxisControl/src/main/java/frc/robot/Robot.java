@@ -9,9 +9,13 @@ package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.revrobotics.CANEncoder;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -27,8 +31,8 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
   Joystick joy;
-  TalonSRX left;
-  TalonSRX right;
+  CANSparkMax paddy;
+  CANEncoder paddyEncoder;
 
   double adjustedSpeed = 0;
   /**
@@ -41,8 +45,8 @@ public class Robot extends TimedRobot {
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
     joy = new Joystick(0);
-    left = new TalonSRX(2);
-    right = new TalonSRX(1);
+    paddy = new CANSparkMax(2, MotorType.kBrushless);
+    paddyEncoder = new CANEncoder(paddy);
   }
 
   /**
@@ -109,9 +113,9 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     adjustedSpeed = (joy.getRawAxis(2) + 1) * 0.5;
-    SmartDashboard.putNumber("Axis", adjustedSpeed);
-    left.set(ControlMode.PercentOutput, -1 * adjustedSpeed);
-    right.set(ControlMode.PercentOutput, adjustedSpeed);
+    SmartDashboard.putNumber("Velocity", paddyEncoder.getVelocity());
+    SmartDashboard.putNumber("BUS", paddy.getBusVoltage());
+    paddy.set(joy.getRawAxis(2));
   }
 
   @Override
