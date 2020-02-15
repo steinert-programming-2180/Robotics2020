@@ -7,6 +7,8 @@
 
 package frc.robot;
 
+import java.util.*;
+
 import com.revrobotics.CANEncoder;
 import com.revrobotics.CANPIDController;
 import com.revrobotics.CANSparkMax;
@@ -28,18 +30,20 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * project.
  */
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
+  private Command autonomousCommand;
 
-  private RobotContainer m_robotContainer;
+  private RobotContainer robotContainer;
 
   public double rpm;
 
   Joystick stick = new Joystick(0);
 
-  private CANSparkMax m_motor;
-  private CANSparkMax m_motor2;
-  private CANPIDController m_pidController;
-  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput;
+  private CANSparkMax motor;
+  private CANSparkMax motor2;
+  private CANPIDController pidController;
+  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, target;
+  Double[] recoveryTimes = new Double[1000];
+  int index = 0;
 
   /**
    * A CANEncoder object is constructed using the GetEncoder() method on an 
@@ -47,7 +51,12 @@ public class Robot extends TimedRobot {
    * or a sensor type and counts per revolution can be passed in to specify
    * a different kind of sensor. Here, it's a quadrature encoder with 4096 CPR.
    */
-  private CANEncoder m_encoder;
+  private CANEncoder encoder;
+
+  double error;
+  long firstTime, secondTime;
+  boolean outRange;
+  double[] errorVals = new double[10];
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -58,46 +67,47 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     // initialize SPARK MAX with CAN ID
-    rpm = 1000;
+    target = 0;
 
-    m_motor = new CANSparkMax(1, MotorType.kBrushless);
-    //m_motor2 = new CANSparkMax(6, MotorType.kBrushless);
-    m_encoder = m_motor.getEncoder(EncoderType.kHallSensor, 4096);
-    //m_motor2.follow(m_motor, true);
+    motor = new CANSparkMax(8, MotorType.kBrushless);
+    motor2 = new CANSparkMax(2, MotorType.kBrushless);
+    encoder = motor.getEncoder(EncoderType.kHallSensor, 4096);
+    motor.setInverted(false);
+    motor2.follow(motor, true);
     
     /**
      * In order to use PID functionality for a controller, a CANPIDController object
      * is constructed by calling the getPIDController() method on an existing
      * CANSparkMax object
      */
-    m_pidController = m_motor.getPIDController();
+    pidController = motor.getPIDController();
   
     /**
      * The PID Controller can be configured to use the analog sensor as its feedback
      * device with the method SetFeedbackDevice() and passing the PID Controller
      * the CANAnalog object. 
      */
-    m_pidController.setFeedbackDevice(m_encoder);
+    pidController.setFeedbackDevice(encoder);
 
     // PID coefficients
-    kP = 0.0; 
+    kP = 0.0003; 
     kI = 0.0;
     kD = 0.0; 
     kIz = 0.0; 
-    kFF = 0.00021; 
+    kFF = 0.00022; 
     kMaxOutput = 1.0; 
     kMinOutput = -1.0;
 
     // set PID coefficients
-    m_pidController.setP(kP);
-    m_pidController.setI(kI);
-    m_pidController.setD(kD);
-    m_pidController.setIZone(kIz);
-    m_pidController.setFF(kFF);
-    m_pidController.setOutputRange(kMinOutput, kMaxOutput);
-    //m_motor.pidWrite(output);
+    pidController.setP(kP);
+    pidController.setI(kI);
+    pidController.setD(kD);
+    pidController.setIZone(kIz);
+    pidController.setFF(kFF);
+    pidController.setOutputRange(kMinOutput, kMaxOutput);
+    //motor.pidWrite(output);
 
-    m_robotContainer = new RobotContainer();
+    robotContainer = new RobotContainer();
   }
 
   /**
@@ -132,11 +142,11 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    autonomousCommand = robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
+    if (autonomousCommand != null) {
+      autonomousCommand.schedule();
     }
   }
 
@@ -153,39 +163,64 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
+    if (autonomousCommand != null) {
+      autonomousCommand.cancel();
     }
 
-    m_pidController.setReference(rpm, ControlType.kVelocity);
+    
   }
 
+  Double max = 0.0;
   /**
    * This function is called periodically during operator control.
    */
   @Override
   public void teleopPeriodic() {
-
-    /**
-     * PIDController objects are commanded to a set point using the 
-     * SetReference() method.
-     * 
-     * The first parameter is the value of the set point, whose units vary
-     * depending on the control type set in the second parameter.
-     * 
-     * The second parameter is the control type can be set to one of four 
-     * parameters:
-     *  com.revrobotics.ControlType.kDutyCycle
-     *  com.revrobotics.ControlType.kPosition
-     *  com.revrobotics.ControlType.kVelocity
-     *  com.revrobotics.ControlType.kVoltage
-     */
-    if (stick.getRawButtonPressed(1)) {
-      m_pidController.setFF(0.0001);
-    } else {
-      m_pidController.setFF(0.0002);
+    // target = (stick.getRawAxis(2) - 1) * -0.5;
+    // motor.set(target);
+    target = ((stick.getRawAxis(2) - 1) * -0.5) * 5000;
+    error = encoder.getVelocity() - target;
+    pidController.setFF(0.00214 / motor.getBusVoltage());
+    pidController.setReference(target, ControlType.kVelocity);
+    addItem(error);
+    
+    if ((error > 75) && !outRange) {
+      outRange = true;
+      firstTime = System.currentTimeMillis();
+    } if (outRange && error < 35) {
+      outRange = false;
+      secondTime = System.currentTimeMillis();
     }
     
+    SmartDashboard.putNumber("Recovery Time", secondTime - firstTime);
+
+    if(index < 1000){
+      Long recovTime = secondTime - firstTime;
+      recoveryTimes[index] = recovTime.doubleValue();
+      if(recoveryTimes[index] > max){
+        max = recoveryTimes[index];
+      }
+      SmartDashboard.putNumber("Max Recovery Time", max);
+      index++;
+    } else{
+      
+      for(Double i : recoveryTimes){
+        if(i > max){
+          max = i;
+        }
+      }
+      
+      index = 0;
+    }
+    //store differences in array
+    //iter each time and get max
+
+    SmartDashboard.putNumber("Error", error);
+    
+    SmartDashboard.putNumber("Target", target);
+    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
+    SmartDashboard.putNumber("Ratio", (motor.getBusVoltage() * motor.getAppliedOutput()) / encoder.getVelocity());
+
   }
 
   @Override
@@ -199,5 +234,16 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void testPeriodic() {
+  }
+
+  public void addItem(double newVal){
+    double temp1 = errorVals[0];
+    double temp2;
+    errorVals[0] = newVal;
+    for (int i = 1; i < errorVals.length; i++) {
+      temp2 = errorVals[i];
+      errorVals[i] = temp1;
+      temp1 = temp2;
+    }
   }
 }
