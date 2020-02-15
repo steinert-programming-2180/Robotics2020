@@ -7,18 +7,13 @@
 
 package frc.robot;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.kauailabs.navx.frc.AHRS;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.controller.PIDController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; 
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -30,52 +25,28 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  TalonSRX left1, left2, left3;
-  TalonSRX right1, right2, right3;
-  TalonSRX[] leftMotors;
-  TalonSRX[] rightMotors;
-  AHRS ahrs;
-  ControlMode cm = ControlMode.PercentOutput;
-  double Kp, Ki, Kd = 1.0;
-  double integral, previous_error, setpoint = 0;
-  PIDController controller = new PIDController(Kp, Ki, Kd);
+  DigitalInput digitalTouch;
+  Compressor c;
+  DoubleSolenoid solTest;
+
   
+
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   @Override
   public void robotInit() {
-    leftMotors[0] = new TalonSRX(1);
-    leftMotors[1] = new TalonSRX(2);
-    leftMotors[2] = new TalonSRX(3);
-
-    rightMotors[0] = new TalonSRX(4);
-    rightMotors[1] = new TalonSRX(5);
-    rightMotors[2] = new TalonSRX(6);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-
-    ahrs = new AHRS(SPI.Port.kMXP);
-    left1 = new TalonSRX(1);
-    left2 = new TalonSRX(2);
-    left3 = new TalonSRX(3);
-    right1 = new TalonSRX(4);
-    right2 = new TalonSRX(5);
-    right3 = new TalonSRX(6);
-
-    leftMotors[0] = left1;
-    leftMotors[1] = left2;
-    leftMotors[2] = left3;
-
-    rightMotors[0] = right1;
-    rightMotors[1] = right2;
-    rightMotors[2] = right3;
-    controller.setTolerance(10);
-    controller.enableContinuousInput(-1, 1);
-    left1.set(cm, controller.calculate(1.0));
-    ahrs.getAngle();
+    digitalTouch = new DigitalInput(4);
+    solTest = new DoubleSolenoid(0, 1);
+    c = new Compressor();
+    c.start();
+    
+    
   }
 
   /**
@@ -94,27 +65,18 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
   }
 
+  /**
+   * This function is called once each time the robot enters Disabled mode.
+   */
   @Override
-  public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
+  public void disabledInit() {
+  }
+
+  @Override
+  public void disabledPeriodic() {
   }
 
   /**
-   * This function is called periodically during operator control.
-   */
-  @Override
-  public void teleopPeriodic() {
-    
-
-  }
-
-    /**
    * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
    */
   @Override
@@ -134,18 +96,33 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
   }
 
+  @Override
+  public void teleopInit() {
+    // This makes sure that the autonomous stops running when
+    // teleop starts running. If you want the autonomous to
+    // continue until interrupted by another command, remove
+    // this line or comment it out.
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.cancel();
+    }
+  }
+
   /**
-   * This function is called once each time the robot enters Disabled mode.
+   * This function is called periodically during operator control.
    */
   @Override
-  public void disabledInit() {
+  public void teleopPeriodic() {
+    if (digitalTouch.get() == false) {
+      // button is pressed.
+      SmartDashboard.putString("test", "pressed");
+      solTest.set(DoubleSolenoid.Value.kForward);
+    } else {
+      // button is not pressed.
+      SmartDashboard.putString("test", "open");
+      solTest.set(DoubleSolenoid.Value.kReverse);
+    }
   }
-
-  @Override
-  public void disabledPeriodic() {
-  }
-
-
+ 
   @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.

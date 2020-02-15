@@ -11,7 +11,8 @@ import com.revrobotics.CANEncoder;
 import com.revrobotics.CANPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.ControlType;
-import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.EncoderType;
+import com.revrobotics.SparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -30,27 +31,21 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  CANSparkMax motor1 = new CANSparkMax(5, MotorType.kBrushless);
-  CANSparkMax motor2 = new CANSparkMax(6, MotorType.kBrushless);
-  //CANSparkMax motor2 = new CANSparkMax(6, MotorType.kBrushless);
-  CANPIDController pidController = new CANPIDController(motor1);
-  CANEncoder encoder = new CANEncoder(motor1);
 
-  double modAxis;
+  public double rpm;
 
-  Joystick stick = new Joystick(0);
+  private CANSparkMax m_motor;
+  private CANSparkMax m_motor2;
+  private CANPIDController m_pidController;
+  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput;
 
-  double kP = 0.0005;
-  double kI = 0.0;
-  double kD = 0.0;
-  double kF = 0.00215;
-  double kIz = 0.0;
-  double kMaxOutput = 1.0;
-  double kMinOutput = -1.0;
-
-  double targetSpeed;
-
-
+  /**
+   * A CANEncoder object is constructed using the GetEncoder() method on an 
+   * existing CANSparkMax object. The assumed encoder type is the hall effect,
+   * or a sensor type and counts per revolution can be passed in to specify
+   * a different kind of sensor. Here, it's a quadrature encoder with 4096 CPR.
+   */
+  private CANEncoder m_encoder;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -58,15 +53,48 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    motor1.setIdleMode(IdleMode.kCoast);
-    motor2.setIdleMode(IdleMode.kCoast);
-    motor1.setInverted(true);
-    motor2.follow(motor1, true);
-    //motor2.setIdleMode(IdleMode.kCoast);
-    //motor2.follow(motor1, true); //Sets to follow, and has 'inverted' set to true
-
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
+    // initialize SPARK MAX with CAN ID
+    rpm = 50;
+
+    m_motor = new CANSparkMax(1, MotorType.kBrushless);
+    m_motor2 = new CANSparkMax(6, MotorType.kBrushless);
+    m_encoder = m_motor.getEncoder(EncoderType.kHallSensor, 4096);
+    m_motor2.follow(m_motor, true);
+    
+    /**
+     * In order to use PID functionality for a controller, a CANPIDController object
+     * is constructed by calling the getPIDController() method on an existing
+     * CANSparkMax object
+     */
+    m_pidController = m_motor.getPIDController();
+  
+    /**
+     * The PID Controller can be configured to use the analog sensor as its feedback
+     * device with the method SetFeedbackDevice() and passing the PID Controller
+     * the CANAnalog object. 
+     */
+    m_pidController.setFeedbackDevice(m_encoder);
+
+    // PID coefficients
+    kP = 0.0615; 
+    kI = 0.0;
+    kD = 0.0; 
+    kIz = 0.0; 
+    kFF = 0.00021; 
+    kMaxOutput = 1.0; 
+    kMinOutput = -1.0;
+
+    // set PID coefficients
+    m_pidController.setP(kP);
+    m_pidController.setI(kI);
+    m_pidController.setD(kD);
+    m_pidController.setIZone(kIz);
+    m_pidController.setFF(kFF);
+    m_pidController.setOutputRange(kMinOutput, kMaxOutput);
+    //m_motor.pidWrite(output);
+
     m_robotContainer = new RobotContainer();
   }
 
@@ -101,45 +129,24 @@ public class Robot extends TimedRobot {
    * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
    */
   @Override
-  public void teleopInit() {
-    pidController.setP(kP);
-    pidController.setI(kI);
-    pidController.setD(kD);
-    pidController.setIZone(kIz);
-    pidController.setFF(kF);
-    pidController.setOutputRange(kMinOutput, kMaxOutput);
-  }
-
-  /**
-   * This function is called periodically during autonomous.
-   */
-  @Override
-  public void teleopPeriodic() {
-    targetSpeed = ((stick.getRawAxis(2) + 1.0) / 2.0) * 5000.0;
-    pidController.setFF(0.00215 / motor1.getBusVoltage());
-    pidController.setReference(targetSpeed, ControlType.kVelocity);
-    //motor1.set(targetSpeed / 5000.0);
-    SmartDashboard.putNumber("Target", targetSpeed);
-    SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-    SmartDashboard.putNumber("Error", encoder.getVelocity() - targetSpeed);
-    SmartDashboard.putNumber("Applied Percent", motor1.getAppliedOutput());
-    SmartDashboard.putNumber("Ratio", (motor1.getAppliedOutput() * motor1.getBusVoltage()) / (encoder.getVelocity() + 0.000000001));
-    SmartDashboard.putNumber("Bus Voltage", motor1.getBusVoltage());
-  }
-
-  @Override
   public void autonomousInit() {
-
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
+  }
 
-   
+  /**
+   * This function is called periodically during autonomous.
+   */
+  @Override
+  public void autonomousPeriodic() {
+  }
 
-    
+  @Override
+  public void teleopInit() {
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -153,8 +160,23 @@ public class Robot extends TimedRobot {
    * This function is called periodically during operator control.
    */
   @Override
-  public void autonomousPeriodic() {
-    
+  public void teleopPeriodic() {
+
+    /**
+     * PIDController objects are commanded to a set point using the 
+     * SetReference() method.
+     * 
+     * The first parameter is the value of the set point, whose units vary
+     * depending on the control type set in the second parameter.
+     * 
+     * The second parameter is the control type can be set to one of four 
+     * parameters:
+     *  com.revrobotics.ControlType.kDutyCycle
+     *  com.revrobotics.ControlType.kPosition
+     *  com.revrobotics.ControlType.kVelocity
+     *  com.revrobotics.ControlType.kVoltage
+     */
+    m_pidController.setReference(rpm, ControlType.kVelocity);
   }
 
   @Override
