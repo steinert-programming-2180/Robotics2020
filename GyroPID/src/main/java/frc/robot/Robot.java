@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpiutil.math.MathUtil;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -36,9 +37,13 @@ public class Robot extends TimedRobot {
   TalonSRX[] rightMotors;
   AHRS ahrs;
   ControlMode cm = ControlMode.PercentOutput;
-  double Kp, Ki, Kd = 1.0;
+  double Kp = -0.335938;
+  double Ki = 0.2;
+  double Kd = 0.3;
   double integral, previous_error, setpoint = 0;
   PIDController controller = new PIDController(Kp, Ki, Kd);
+  Joystick joy = new Joystick(0);
+  Joystick joy2 = new Joystick(1);
   
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -46,36 +51,27 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    leftMotors[0] = new TalonSRX(1);
-    leftMotors[1] = new TalonSRX(2);
-    leftMotors[2] = new TalonSRX(3);
-
-    rightMotors[0] = new TalonSRX(4);
-    rightMotors[1] = new TalonSRX(5);
-    rightMotors[2] = new TalonSRX(6);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
 
     ahrs = new AHRS(SPI.Port.kMXP);
-    left1 = new TalonSRX(1);
-    left2 = new TalonSRX(2);
-    left3 = new TalonSRX(3);
-    right1 = new TalonSRX(4);
-    right2 = new TalonSRX(5);
-    right3 = new TalonSRX(6);
+    // left1 = new TalonSRX(1);
+    // left2 = new TalonSRX(2);
+    // left3 = new TalonSRX(3);
+    // right1 = new TalonSRX(4);
+    // right2 = new TalonSRX(5);
+    // right3 = new TalonSRX(6);
 
-    leftMotors[0] = left1;
-    leftMotors[1] = left2;
-    leftMotors[2] = left3;
+    // leftMotors[0] = left1;
+    // leftMotors[1] = left2;
+    // leftMotors[2] = left3;
 
-    rightMotors[0] = right1;
-    rightMotors[1] = right2;
-    rightMotors[2] = right3;
-    controller.setTolerance(10);
-    controller.enableContinuousInput(-1, 1);
-    left1.set(cm, controller.calculate(1.0));
-    ahrs.getAngle();
+    // rightMotors[0] = right1;
+    // rightMotors[1] = right2;
+    // rightMotors[2] = right3;
+    //controller.setTolerance(10);
+    //left1.set(cm, controller.calculate(1.0));
   }
 
   /**
@@ -103,6 +99,9 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+    SmartDashboard.putNumber("P", 0);
+    SmartDashboard.putNumber("I", 0);
+    SmartDashboard.putNumber("D", 0);
   }
 
   /**
@@ -110,8 +109,14 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    
-
+    controller.setP(SmartDashboard.getNumber("P", 0));
+    controller.setI(SmartDashboard.getNumber("I", 0));
+    controller.setD(SmartDashboard.getNumber("D", 0));
+    SmartDashboard.putNumber("PJoystick", joy.getRawAxis(2));
+    SmartDashboard.putNumber("DJoystick", joy2.getRawAxis(2));
+    SmartDashboard.putNumber("ANGLE", ahrs.getAngle());
+    SmartDashboard.putNumber("PID", MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
+    SmartDashboard.putNumber("Error", controller.getPositionError());
   }
 
     /**
