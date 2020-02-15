@@ -31,15 +31,19 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  // TalonSRX left1, left2, left3;
-  // TalonSRX right1, right2, right3;
-  // TalonSRX[] leftMotors;
-  // TalonSRX[] rightMotors;
+  TalonSRX left1, left2, left3;
+  TalonSRX right1, right2, right3;
+  TalonSRX[] leftMotors = new TalonSRX[3];
+  TalonSRX[] rightMotors = new TalonSRX[3];
   AHRS ahrs;
   ControlMode cm = ControlMode.PercentOutput;
-  double Kp, Ki, Kd = 1.0;
+  double Kp = -0.335938;
+  double Ki = 0.2;
+  double Kd = 0.3;
   double integral, previous_error, setpoint = 0;
   PIDController controller = new PIDController(Kp, Ki, Kd);
+  Joystick joy = new Joystick(0);
+  Joystick joy2 = new Joystick(1);
   
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -47,32 +51,31 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    // leftMotors[0] = new TalonSRX(1);
-    // leftMotors[1] = new TalonSRX(2);
-    // leftMotors[2] = new TalonSRX(3);
-
-    // rightMotors[0] = new TalonSRX(4);
-    // rightMotors[1] = new TalonSRX(5);
-    // rightMotors[2] = new TalonSRX(6);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
 
     ahrs = new AHRS(SPI.Port.kMXP);
-    // left1 = new TalonSRX(1);
-    // left2 = new TalonSRX(2);
-    // left3 = new TalonSRX(3);
-    // right1 = new TalonSRX(4);
-    // right2 = new TalonSRX(5);
-    // right3 = new TalonSRX(6);
+    left1 = new TalonSRX(1);
+    left2 = new TalonSRX(2);
+    left3 = new TalonSRX(3);
+    right1 = new TalonSRX(4);
+    right2 = new TalonSRX(5);
+    right3 = new TalonSRX(6);
 
-    // leftMotors[0] = left1;
-    // leftMotors[1] = left2;
-    // leftMotors[2] = left3;
+    leftMotors[0] = left1;
+    leftMotors[1] = left2;
+    leftMotors[2] = left3;
 
-    // rightMotors[0] = right1;
-    // rightMotors[1] = right2;
-    // rightMotors[2] = right3;
+    rightMotors[0] = right1;
+    rightMotors[1] = right2;
+    rightMotors[2] = right3;
+
+    controller.setP(0.003);
+    controller.setI(0.0002);
+    controller.setD(0.01);
+    //controller.setTolerance(10);
+    //left1.set(cm, controller.calculate(1.0));
   }
 
   /**
@@ -103,8 +106,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("P", 0);
     SmartDashboard.putNumber("I", 0);
     SmartDashboard.putNumber("D", 0);
-    controller.setSetpoint(ahrs.getAngle()+30);
-    SmartDashboard.putNumber("Angle", ahrs.getAngle());
+    controller.setSetpoint(ahrs.getAngle() + 90);
   }
 
   /**
@@ -112,11 +114,20 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    controller.setP(SmartDashboard.getNumber("P", 0));
-    controller.setI(SmartDashboard.getNumber("I", 0));
-    controller.setD(SmartDashboard.getNumber("D", 0));
-    SmartDashboard.putNumber("Angle2", ahrs.getAngle());
-    SmartDashboard.putNumber("Result", MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
+    // controller.setP(SmartDashboard.getNumber("P", 0.005));
+    // controller.setI(SmartDashboard.getNumber("I", 0));
+    // controller.setD(SmartDashboard.getNumber("D", 0));
+    SmartDashboard.putNumber("ANGLE", ahrs.getAngle());
+    SmartDashboard.putNumber("PID", MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
+    SmartDashboard.putNumber("Error", controller.getPositionError());
+
+    for(TalonSRX i : leftMotors){
+      i.set(ControlMode.PercentOutput, MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
+    }
+
+    for(TalonSRX i : rightMotors){
+      i.set(ControlMode.PercentOutput, MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
+    }
   }
 
     /**
@@ -137,6 +148,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousPeriodic() {
+    SmartDashboard.putNumber("WeirdAngle", ahrs.getYaw());
   }
 
   /**

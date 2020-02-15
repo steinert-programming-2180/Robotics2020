@@ -34,6 +34,8 @@ public class Robot extends TimedRobot {
 
   public double rpm;
 
+  Joystick stick = new Joystick(0);
+
   private CANSparkMax m_motor;
   private CANSparkMax m_motor2;
   private CANPIDController m_pidController;
@@ -56,12 +58,12 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     // initialize SPARK MAX with CAN ID
-    rpm = 50;
+    rpm = 1000;
 
     m_motor = new CANSparkMax(1, MotorType.kBrushless);
-    m_motor2 = new CANSparkMax(6, MotorType.kBrushless);
+    //m_motor2 = new CANSparkMax(6, MotorType.kBrushless);
     m_encoder = m_motor.getEncoder(EncoderType.kHallSensor, 4096);
-    m_motor2.follow(m_motor, true);
+    //m_motor2.follow(m_motor, true);
     
     /**
      * In order to use PID functionality for a controller, a CANPIDController object
@@ -78,7 +80,7 @@ public class Robot extends TimedRobot {
     m_pidController.setFeedbackDevice(m_encoder);
 
     // PID coefficients
-    kP = 0.0615; 
+    kP = 0.0; 
     kI = 0.0;
     kD = 0.0; 
     kIz = 0.0; 
@@ -154,6 +156,8 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    m_pidController.setReference(rpm, ControlType.kVelocity);
   }
 
   /**
@@ -176,7 +180,12 @@ public class Robot extends TimedRobot {
      *  com.revrobotics.ControlType.kVelocity
      *  com.revrobotics.ControlType.kVoltage
      */
-    m_pidController.setReference(rpm, ControlType.kVelocity);
+    if (stick.getRawButtonPressed(1)) {
+      m_pidController.setFF(0.0001);
+    } else {
+      m_pidController.setFF(0.0002);
+    }
+    
   }
 
   @Override
