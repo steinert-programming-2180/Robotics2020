@@ -4,6 +4,7 @@ import math
 import colorsys
 import time
 from enum import Enum
+from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer
 
 class ContourTests:
     """
@@ -99,16 +100,20 @@ class ContourTests:
         else:
             mode = cv2.RETR_LIST
         method = cv2.CHAIN_APPROX_SIMPLE
-        contours, hierarchy =cv2.findContours(input, mode=mode, method=method)
+        im, contours, hierarchy =cv2.findContours(input, mode=mode, method=method)
         return contours
 
 
 BlurType = Enum('BlurType', 'Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter')
 
+# cs = CameraServer.getInstance()
+# cs.startAutomaticCapture()
+
 gLine = ContourTests()
 
 cap = cv2.VideoCapture(0)
-cap.set(15, 0)
+cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+
 
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
 
@@ -136,7 +141,7 @@ while(True):
 
 
 
-    cv2.imshow('frame',image)
+    #cv2.imshow('frame',image)
 
     print(time.time() - startTime)
 
