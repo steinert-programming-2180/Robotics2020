@@ -1,8 +1,9 @@
 import cv2
-import numpy
+import numpy as np
 import math
 import colorsys
 import time
+import json
 from enum import Enum
 from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer
 
@@ -54,12 +55,12 @@ class ContourTests:
     def __hsv_threshold(input, hue, sat, val):
         """Segment an image based on hue, saturation, and value ranges.
         Args:
-            input: A BGR numpy.ndarray.
+            input: A BGR np.ndarray.
             hue: A list of two numbers the are the min and max hue.
             sat: A list of two numbers the are the min and max saturation.
             lum: A list of two numbers the are the min and max value.
         Returns:
-            A black and white numpy.ndarray.
+            A black and white np.ndarray.
         """
         out = cv2.cvtColor(input, cv2.COLOR_BGR2HSV)
         return cv2.inRange(out, (hue[0], sat[0], val[0]),  (hue[1], sat[1], val[1]))
@@ -68,11 +69,11 @@ class ContourTests:
     def __blur(src, type, radius):
         """Softens an image using one of several filters.
         Args:
-            src: The source mat (numpy.ndarray).
+            src: The source mat (np.ndarray).
             type: The blurType to perform represented as an int.
             radius: The radius for the blur as a float.
         Returns:
-            A numpy.ndarray that has been blurred.
+            A np.ndarray that has been blurred.
         """
         if(type is BlurType.Box_Blur):
             ksize = int(2 * round(radius) + 1)
@@ -90,10 +91,10 @@ class ContourTests:
     def __find_contours(input, external_only):
         """Sets the values of pixels in a binary image to their distance to the nearest black pixel.
         Args:
-            input: A numpy.ndarray.
+            input: A np.ndarray.
             external_only: A boolean. If true only external contours are found.
         Return:
-            A list of numpy.ndarray where each one represents a contour.
+            A list of np.ndarray where each one represents a contour.
         """
         if(external_only):
             mode = cv2.RETR_EXTERNAL
@@ -106,17 +107,22 @@ class ContourTests:
 
 BlurType = Enum('BlurType', 'Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter')
 
+configFile = "/boot/frc.json"
 gLine = ContourTests()
-cap = cv2.VideoCapture(0)
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
+camera = UsbCamera("CammyBoi", 0)
+img = np.zeros(shape=(240, 320, 3), dtype=np.uint8)
+camera.setConfigJson(json.dumps(json.load(open(configFile, "rt", encoding="utf-8"))))
 cs = CameraServer.getInstance()
-networkStream = cs.putVideo("Out", 160, 120)
+cs.addCamera(camera)
+cap = cs.getVideo()
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
+networkStream = cs.putVideo("StreamyBoi", 320, 240)
 
-if __name__ == __main__:
+if __name__ == "__main__":
     
     while(True):
         # Capture frame-by-frame
-        ret, src = cap.read()
+        (ret, src) = cap.grabFrame(img)
         startTime = time.time()
 
         gLine.process(src)
@@ -144,160 +150,3 @@ if __name__ == __main__:
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    # When everything done, release the capture
-    
-
-#   JSON format:
-#   {
-#       "team": <team number>,
-#       "ntmode": <"client" or "server", "client" if unspecified>
-#       "cameras": [
-#           {
-#               "name": <camera name>
-#               "path": <path, e.g. "/dev/video0">
-#               "pixel format": <"MJPEG", "YUYV", etc>   // optional
-#               "width": <video mode width>              // optional
-#               "height": <video mode height>            // optional
-#               "fps": <video mode fps>                  // optional
-#               "brightness": <percentage brightness>    // optional
-#               "white balance": <"auto", "hold", value> // optional
-#               "exposure": <"auto", "hold", value>      // optional
-#               "properties": [                          // optional
-#                   {
-#                       "name": <property name>
-#                       "value": <property value>
-#                   }
-#               ],
-#               "stream": {                              // optional
-#                   "properties": [
-#                       {
-#                           "name": <stream property name>
-#                           "value": <stream property value>
-#                       }
-#                   ]
-#               }
-#           }
-#       ]
-#       "switched cameras": [
-#           {
-#               "name": <virtual camera name>
-#               "key": <network table key used for selection>
-#               // if NT value is a string, it's treated as a name
-#               // if NT value is a double, it's treated as an integer index
-#           }
-#       ]
-#   }
-
-configFile = "/boot/frc.json"
-
-class CameraConfig: pass
-
-team = None
-server = False
-cameraConfigs = []
-switchedCameraConfigs = []
-cameras = []
-
-def parseError(str):
-    """Report parse error."""
-    print("config error in '" + configFile + "': " + str, file=sys.stderr)
-
-def readCameraConfig(config):
-    """Read single camera configuration."""
-    cam = CameraConfig()
-
-    # name
-    try:
-        cam.name = config["name"]
-    except KeyError:
-        parseError("could not read camera name")
-        return False
-
-    # path
-    try:
-        cam.path = config["path"]
-    except KeyError:
-        parseError("camera '{}': could not read path".format(cam.name))
-        return False
-
-    # stream properties
-    cam.streamConfig = config.get("stream")
-
-    cam.config = config
-
-    cameraConfigs.append(cam)
-    return True
-
-def readSwitchedCameraConfig(config):
-    """Read single switched camera configuration."""
-    cam = CameraConfig()
-
-    # name
-    try:
-        cam.name = config["name"]
-    except KeyError:
-        parseError("could not read switched camera name")
-        return False
-
-    # path
-    try:
-        cam.key = config["key"]
-    except KeyError:
-        parseError("switched camera '{}': could not read key".format(cam.name))
-        return False
-
-    switchedCameraConfigs.append(cam)
-    return True
-
-def readConfig():
-    """Read configuration file."""
-    global team
-    global server
-
-    # parse file
-    try:
-        with open(configFile, "rt", encoding="utf-8") as f:
-            j = json.load(f)
-    except OSError as err:
-        print("could not open '{}': {}".format(configFile, err), file=sys.stderr)
-        return False
-
-    # top level must be an object
-    if not isinstance(j, dict):
-        parseError("must be JSON object")
-        return False
-
-    # team number
-    try:
-        team = j["team"]
-    except KeyError:
-        parseError("could not read team number")
-        return False
-
-    # ntmode (optional)
-    if "ntmode" in j:
-        str = j["ntmode"]
-        if str.lower() == "client":
-            server = False
-        elif str.lower() == "server":
-            server = True
-        else:
-            parseError("could not understand ntmode value '{}'".format(str))
-
-    # cameras
-    try:
-        cameras = j["cameras"]
-    except KeyError:
-        parseError("could not read cameras")
-        return False
-    for camera in cameras:
-        if not readCameraConfig(camera):
-            return False
-
-    # switched cameras
-    if "switched cameras" in j:
-        for camera in j["switched cameras"]:
-            if not readSwitchedCameraConfig(camera):
-                return False
-
-    return True
