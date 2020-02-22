@@ -5,7 +5,7 @@ import colorsys
 import time
 import json
 from enum import Enum
-from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer
+from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer, CvSink, CvSource, VideoMode
 
 class ContourTests:
     """
@@ -17,7 +17,7 @@ class ContourTests:
         """
 
         self.__hsv_threshold_hue = [38.84892086330935, 104.74402730375427]
-        self.__hsv_threshold_saturation = [0.0, 255.0]
+        self.__hsv_threshold_saturation = [100.0, 255.0]
         self.__hsv_threshold_value = [49.94621811955906, 255.0]
 
         self.hsv_threshold_output = None
@@ -107,22 +107,28 @@ class ContourTests:
 
 BlurType = Enum('BlurType', 'Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter')
 
-configFile = "/boot/frc.json"
+#configFile = "/boot/frc.json"
 gLine = ContourTests()
 camera = UsbCamera("CammyBoi", 0)
-img = np.zeros(shape=(240, 320, 3), dtype=np.uint8)
-camera.setConfigJson(json.dumps(json.load(open(configFile, "rt", encoding="utf-8"))))
-cs = CameraServer.getInstance()
-cs.addCamera(camera)
-cap = cs.getVideo()
+camera.setExposureManual(10)
+#camera.setConfigJson(json.dumps(json.load(open(configFile, "rt", encoding="utf-8"))))
+vidSink = CvSink("Camera")
+vidSink.setSource(camera)
+
+vidSource = CvSource("Processed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30)
+networkStream = MjpegServer("Stream", 1181)
+networkStream.setSource(vidSource)
+img = np.zeros(shape=(480, 640, 3), dtype=np.uint8)
+
+
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
-networkStream = cs.putVideo("StreamyBoi", 320, 240)
+
 
 if __name__ == "__main__":
     
     while(True):
         # Capture frame-by-frame
-        (ret, src) = cap.grabFrame(img)
+        ret, src = vidSink.grabFrame(img)
         startTime = time.time()
 
         gLine.process(src)
@@ -146,7 +152,7 @@ if __name__ == "__main__":
 
         print(time.time() - startTime)
 
-        networkStream.putFrame(image)
+        vidSource.putFrame(image)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
