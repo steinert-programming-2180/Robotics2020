@@ -29,7 +29,7 @@ public class Robot extends TimedRobot {
 
   Joystick leftStick, rightStick;
   CANSparkMax left1, left2, left3, right1, right2, right3;
-
+  
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -122,8 +122,24 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     SmartDashboard.putNumber("leftJoystick", leftStick.getRawAxis(1));
     SmartDashboard.putNumber("rightJoystick", rightStick.getRawAxis(1));
+
     left1.set(leftStick.getRawAxis(1) * 0.2);
     right1.set(rightStick.getRawAxis(1) * 0.2);
+
+    // while(leftStick.getRawButton(1)){
+    //   left1.set(leftStick.getRawAxis(1) * 0.2);
+    //   right1.set(leftStick.getRawAxis(1) * 0.2);
+    // }
+    
+    // while(leftStick.getRawButton(2)){
+    //   left2.set(leftStick.getRawAxis(1) * 0.2);
+    //   right2.set(leftStick.getRawAxis(1) * 0.2);
+    // }
+
+    // while(leftStick.getRawButton(3)){
+    //   left3.set(leftStick.getRawAxis(1) * 0.2);
+    //   right3.set(leftStick.getRawAxis(1) * 0.2);
+    // }
   }
 
   @Override
