@@ -10,10 +10,13 @@ package frc.robot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.SparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -31,10 +34,11 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  TalonSRX left1, left2, left3;
-  TalonSRX right1, right2, right3;
-  TalonSRX[] leftMotors = new TalonSRX[3];
-  TalonSRX[] rightMotors = new TalonSRX[3];
+  CANSparkMax left1, left2, left3;
+  CANSparkMax right1, right2, right3;
+  CANSparkMax[] leftMotors = new CANSparkMax[3];
+  CANSparkMax[] rightMotors = new CANSparkMax[3];
+
   AHRS ahrs;
   ControlMode cm = ControlMode.PercentOutput;
   double Kp = -0.335938;
@@ -56,12 +60,12 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     ahrs = new AHRS(SPI.Port.kMXP);
-    left1 = new TalonSRX(1);
-    left2 = new TalonSRX(2);
-    left3 = new TalonSRX(3);
-    right1 = new TalonSRX(4);
-    right2 = new TalonSRX(5);
-    right3 = new TalonSRX(6);
+    left1 = new CANSparkMax(1, MotorType.kBrushless);
+    left2 = new CANSparkMax(2, MotorType.kBrushless);
+    left3 = new CANSparkMax(3, MotorType.kBrushless);
+    right1 = new CANSparkMax(4, MotorType.kBrushless);
+    right2 = new CANSparkMax(5, MotorType.kBrushless);
+    right3 = new CANSparkMax(6, MotorType.kBrushless);
 
     leftMotors[0] = left1;
     leftMotors[1] = left2;
@@ -74,32 +78,15 @@ public class Robot extends TimedRobot {
     controller.setP(0.003);
     controller.setI(0.0002);
     controller.setD(0.01);
-    //controller.setTolerance(10);
-    //left1.set(cm, controller.calculate(1.0));
   }
 
-  /**
-   * This function is called every robot packet, no matter the mode. Use this for items like
-   * diagnostics that you want ran during disabled, autonomous, teleoperated and test.
-   *
-   * <p>This runs after the mode specific periodic functions, but before
-   * LiveWindow and SmartDashboard integrated updating.
-   */
   @Override
   public void robotPeriodic() {
-    // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
-    // commands, running already-scheduled commands, removing finished or interrupted commands,
-    // and running subsystem periodic() methods.  This must be called from the robot's periodic
-    // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
   }
 
   @Override
   public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -114,19 +101,16 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    // controller.setP(SmartDashboard.getNumber("P", 0.005));
-    // controller.setI(SmartDashboard.getNumber("I", 0));
-    // controller.setD(SmartDashboard.getNumber("D", 0));
     SmartDashboard.putNumber("ANGLE", ahrs.getAngle());
     SmartDashboard.putNumber("PID", MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
     SmartDashboard.putNumber("Error", controller.getPositionError());
 
-    for(TalonSRX i : leftMotors){
-      i.set(ControlMode.PercentOutput, MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
+    for(CANSparkMax i : leftMotors){
+      i.set(MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
     }
 
-    for(TalonSRX i : rightMotors){
-      i.set(ControlMode.PercentOutput, MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
+    for(CANSparkMax i : rightMotors){
+      i.set(MathUtil.clamp(controller.calculate(ahrs.getAngle()), -1, 1));
     }
   }
 
