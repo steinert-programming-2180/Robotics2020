@@ -356,19 +356,19 @@ worldCoordinates = [[-19.645, 0, 0], #Top left
                     [19.645, 0, 0],  #Top right
                     [-9.8125, -17, 0], #Bottom left
                     [9.8125, -17, 0]] #Bottom right
-cameraMatrix = [[1230.5642479670416, 0.0, 670.2136192250273], [0.0, 1236.9847320777644, 380.13941446862134], [0.0, 0.0, 1.0]]
-dist = [[0.3429686894097005, -2.5260873521404896, 0.009816323216217967, 0.001435552712234123, 6.877960486694869]]
+cameraMatrix = [[654.5772870367346, 0.0, 337.0507139506593], [0.0, 656.1587737528665, 250.33959129066534], [0.0, 0.0, 1.0]]
+dist = [[0.08347161242882054, -0.4187163193375646, 0.007898104661949604, -0.001084625132784283, -0.2415468504089658]]
 pipeline = FixingMistakes()
 
 maxPics = 30
-val = 33
+val = 18
 
 blank_image = np.zeros((480,640,3), np.uint8)
-epsilon = 15
+epsilon = 25
 
 while True:
-    imgloc = "CameraCalibration\\2020Target\\my_photo-{imgNo}.jpg".format(imgNo = val)
-    #imgloc = "CameraCalibration\\2020Target\\10sqrt2.jpg"
+    #imgloc = "CameraCalibration\\2020Target\\my_photo-{imgNo}.jpg".format(imgNo = val)
+    imgloc = "CameraCalibration\\2020Target\\10sqrt2.jpg"
     img = cv2.imread(imgloc)
     pipeline.process(img)
 
@@ -403,7 +403,6 @@ while True:
         distance, angle1, angle2 = compute_output_values(rvec, tvec)
 
         print(distance, angle1, angle2)
-        print(distance/120.0)
 
     cv2.imshow('image', img)
     ch = cv2.waitKey(0)
