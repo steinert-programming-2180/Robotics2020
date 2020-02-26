@@ -4,7 +4,8 @@ import math
 import colorsys
 import time
 from enum import Enum
-from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer
+from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer, CvSink, CvSource, VideoMode
+
 
 class ContourTests:
     """
@@ -107,43 +108,50 @@ class ContourTests:
 BlurType = Enum('BlurType', 'Box_Blur Gaussian_Blur Median_Filter Bilateral_Filter')
 
 gLine = ContourTests()
-cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture(0)
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
-cs = CameraServer.getInstance()
-networkStream = cs.putVideo("Out", 160, 120)
+# cs = CameraServer.getInstance()
+# networkStream = cs.putVideo("Out", 160, 120)
+camera = UsbCamera("CammyBoi", 0)
+camera.setExposureManual(10)
+#camera.setConfigJson(json.dumps(json.load(open(configFile, "rt", encoding="utf-8"))))
+vidSink = CvSink("Camera")
+vidSink.setSource(camera)
 
-if __name__ == __main__:
-    
-    while(True):
-        # Capture frame-by-frame
-        ret, src = cap.read()
-        startTime = time.time()
+vidSource = CvSource("Processed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30)
+networkStream = MjpegServer("Stream", 1181)
+networkStream.setSource(vidSource)
+img = numpy.zeros(shape=(480, 640, 3), dtype=numpy.uint8)
 
-        gLine.process(src)
-        image = src
-        contours = gLine.find_contours_output
+while(True):
+    # Capture frame-by-frame
+    # ret, src = cap.read()
+    ret, src = vidSink.grabFrame(img)
+    startTime = time.time()
 
-        c1, c2 = None, None
+    gLine.process(src)
+    image = src
+    contours = gLine.find_contours_output
 
-        if len(contours) > 0:
-            
-            sortedContours = sorted(contours, key=cv2.contourArea, reverse=True)
+    c1, c2 = None, None
 
-            c1 = sortedContours[0]
+    if len(contours) > 0:
+        
+        sortedContours = sorted(contours, key=cv2.contourArea, reverse=True)
 
-            cv2.drawContours(image, [c1], 0, (0,255,0), 3)
+        c1 = sortedContours[0]
 
-            if len(contours) > 1:
-                c2 = sortedContours[1]
-                cv2.drawContours(image, [c2], 0, (0,255,0), 3)
+        cv2.drawContours(image, [c1], 0, (0,255,0), 3)
+
+        if len(contours) > 1:
+            c2 = sortedContours[1]
+            cv2.drawContours(image, [c2], 0, (0,255,0), 3)
 
 
-        print(time.time() - startTime)
+    print(time.time() - startTime)
 
-        networkStream.putFrame(image)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
     # When everything done, release the capture
     
 

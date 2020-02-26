@@ -3,8 +3,8 @@ import numpy as np
 import math
 import colorsys
 import time
-import json
 from enum import Enum
+from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer, CvSink, CvSource, VideoMode
 
 class FixingMistakes:
     """
@@ -191,7 +191,7 @@ class FixingMistakes:
         else:
             mode = cv2.RETR_LIST
         method = cv2.CHAIN_APPROX_SIMPLE
-        contours, hierarchy =cv2.findContours(input, mode=mode, method=method)
+        _, contours, hierarchy =cv2.findContours(input, mode=mode, method=method)
         return contours
 
     @staticmethod
@@ -255,37 +255,6 @@ class FixingMistakes:
 
 
 
-'''
-
-LIVE FEED
-
-camera = UsbCamera("CammyBoi", 0)
-camera.setExposureManual(10)
-#camera.setConfigJson(json.dumps(json.load(open(configFile, "rt", encoding="utf-8"))))
-vidSink = CvSink("Camera")
-vidSink.setSource(camera)
-
-vidSource = CvSource("Processed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30)
-networkStream = MjpegServer("Stream", 1181)
-networkStream.setSource(vidSource)
-img = np.zeros(shape=(480, 640, 3), dtype=np.uint8)
-
-while(True):
-    ret, src = vidSink.grabFrame(img)
-    startTime = time.time()
-
-    gLine.process(src)
-
-    image = gLine.mask_output
-
-    print(time.time() - startTime)
-    vidSource.putFrame(image)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-# When everything done, release the capture
-
-'''
-
 def filter(polys):
     output = []
 
@@ -293,8 +262,8 @@ def filter(polys):
         if len(p) == 4:
             output.append(p)
 
-    if len(output) == 0 and len(polys) > 0:
-        output.append(max(polys, key = cv2.contourArea))
+    # if len(output) == 0 and len(polys) > 0:
+    #     output.append(max(polys, key = cv2.contourArea))
 
     return output
 
@@ -358,7 +327,7 @@ worldCoordinates = [[-19.645, 0, 0], #Top left
                     [9.8125, -17, 0]] #Bottom right
 cameraMatrix = [[654.5772870367346, 0.0, 337.0507139506593], [0.0, 656.1587737528665, 250.33959129066534], [0.0, 0.0, 1.0]]
 dist = [[0.08347161242882054, -0.4187163193375646, 0.007898104661949604, -0.001084625132784283, -0.2415468504089658]]
-pipeline = FixingMistakes()
+gLine = FixingMistakes()
 
 maxPics = 30
 val = 35
@@ -366,6 +335,7 @@ val = 35
 blank_image = np.zeros((480,640,3), np.uint8)
 epsilon = 25
 
+'''
 while True:
     imgloc = "CameraCalibration\\2020Target\\my_photo-{imgNo}.jpg".format(imgNo = val)
     #imgloc = "CameraCalibration\\2020Target\\10sqrt2.jpg"
@@ -412,3 +382,60 @@ while True:
         break
 
 cv2.destroyAllWindows()
+'''
+
+def doNothing():
+    return True
+
+camera = UsbCamera("CammyBoi", 0)
+camera.setExposureManual(0)
+#camera.setConfigJson(json.dumps(json.load(open(configFile, "rt", encoding="utf-8"))))
+vidSink = CvSink("Camera")
+vidSink.setSource(camera)
+
+vidSource = CvSource("Processed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30)
+networkStream = MjpegServer("Stream", 1181)
+networkStream.setSource(vidSource)
+img = np.zeros(shape=(480, 640, 3), dtype=np.uint8)
+
+while(True):
+    ret, src = vidSink.grabFrame(img)
+    startTime = time.time()
+
+    gLine.process(src)
+
+    processedImg = gLine.mask_output
+    contours = gLine.filter_contours_1_output
+
+    approxPolys = []
+    for c in contours:
+        approxPolys.append(cv2.approxPolyDP(c, epsilon, True))
+
+
+    filteredPolys = filter(approxPolys)
+
+    poly_img = np.zeros((480,640,3), np.uint8)
+
+    imgCoords = []
+
+    if len(filteredPolys) > 0:
+        c = max(filteredPolys, key = cv2.contourArea)
+        cv2.drawContours(img, [c], -1, (255, 255, 255), 1)
+        imgCoords = findCameraPoints(c)
+
+        cv2.circle(img, tuple(imgCoords[0]), 2, (255, 0, 0), 1)   #top left - blue
+        cv2.circle(img, tuple(imgCoords[1]), 2, (0, 0, 255), 1)   #top right - red
+        cv2.circle(img, tuple(imgCoords[2]), 2, (255, 0, 255), 1) #bottom left - magenta
+        cv2.circle(img, tuple(imgCoords[3]), 2, (0, 255, 255), 1) #bottom right - yellow
+
+        retval, rvec, tvec = cv2.solvePnP(np.array(worldCoordinates, dtype=np.float32), 
+                            np.array(imgCoords, dtype=np.float32), 
+                            np.array(cameraMatrix, dtype=np.float32), 
+                            np.array(dist, dtype=np.float32))
+        distance, angle1, angle2 = compute_output_values(rvec, tvec)
+
+        print(distance, angle1, angle2)
+        
+        print("time: ", time.time() - startTime)
+
+        vidSource.putFrame(processedImg)
