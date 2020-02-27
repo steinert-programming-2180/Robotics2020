@@ -99,7 +99,6 @@ class FixingMistakes:
         # Step CV_erode0:
         self.__cv_erode_src = self.cv_dilate_output
         (self.cv_erode_output) = self.__cv_erode(self.__cv_erode_src, self.__cv_erode_kernel, self.__cv_erode_anchor, self.__cv_erode_iterations, self.__cv_erode_bordertype, self.__cv_erode_bordervalue)
-
         # Step Mask0:
         self.__mask_input = source0
         self.__mask_mask = self.cv_erode_output
@@ -108,7 +107,7 @@ class FixingMistakes:
         # Step Find_Contours0:
         self.__find_contours_input = self.cv_erode_output
         (self.find_contours_output) = self.__find_contours(self.__find_contours_input, self.__find_contours_external_only)
-
+        
         # Step Filter_Contours0:
         self.__filter_contours_0_contours = self.find_contours_output
         (self.filter_contours_0_output) = self.__filter_contours(self.__filter_contours_0_contours, self.__filter_contours_0_min_area, self.__filter_contours_0_min_perimeter, self.__filter_contours_0_min_width, self.__filter_contours_0_max_width, self.__filter_contours_0_min_height, self.__filter_contours_0_max_height, self.__filter_contours_0_solidity, self.__filter_contours_0_max_vertices, self.__filter_contours_0_min_vertices, self.__filter_contours_0_min_ratio, self.__filter_contours_0_max_ratio)
@@ -361,7 +360,7 @@ dist = [[0.3429686894097005, -2.5260873521404896, 0.009816323216217967, 0.001435
 pipeline = FixingMistakes()
 
 maxPics = 30
-val = 33
+val = 35
 
 blank_image = np.zeros((480,640,3), np.uint8)
 epsilon = 15
