@@ -113,8 +113,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    double joystickAxis = controller.getRawAxis()
-    double joystickAxix = controller.getRawAxis()
+    double joystickAxis = controller.getRawAxis();
+    double joystickAxix = controller.getRawAxis();
   }
 
   @Override

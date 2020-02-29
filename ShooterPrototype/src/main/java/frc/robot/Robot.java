@@ -40,11 +40,9 @@ public class Robot extends TimedRobot {
   Joystick stick = new Joystick(0);
 
   private CANSparkMax motor;
-  //private CANSparkMax motor2;
+  private CANSparkMax motor2;
   private CANPIDController pidController;
   public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, target;
-  Double[] recoveryTimes = new Double[1000];
-  int index = 0;
 
   /**
    * A CANEncoder object is constructed using the GetEncoder() method on an 
@@ -71,10 +69,10 @@ public class Robot extends TimedRobot {
     target = 0;
 
     motor = new CANSparkMax(8, MotorType.kBrushless);
-    //motor2 = new CANSparkMax(2, MotorType.kBrushless);
+    motor2 = new CANSparkMax(2, MotorType.kBrushless);
     encoder = motor.getEncoder();
     motor.setInverted(false);
-    //motor2.follow(motor, true);
+    motor2.follow(motor, true);
     
     /**
      * In order to use PID functionality for a controller, a CANPIDController object
@@ -91,12 +89,11 @@ public class Robot extends TimedRobot {
     pidController.setFeedbackDevice(encoder);
 
     // PID coefficients
-    kP = 0.0; 
+    kP = 0.00001; 
     kI = 0.0;
     kD = 0.0; 
     kIz = 0.0; 
-    //kFF = 0.00022; 
-    kFF = 0.00022;
+    kFF = 0.0021; 
     kMaxOutput = 1.0; 
     kMinOutput = -1.0;
 
@@ -182,20 +179,20 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // target = (stick.getRawAxis(2) - 1) * -0.5;
     // motor.set(target);
-    target = (((stick.getRawAxis(2) - 1) * -0.5) * 3000);
-    double newTarget = MathUtil.clamp(stick.getRawAxis(2), 0, 1);
+    target = ((stick.getRawAxis(2) - 1) * -0.5) * 5000;
+    //target = (stick.getRawAxis(2) - 1) * -0.5;
     error = encoder.getVelocity() - target;
-    //pidController.setFF(0.00214 / motor.getBusVoltage());
-    //pidController.setReference(target, ControlType.kVelocity);
-    motor.set(newTarget);
+    pidController.setFF(0.0021 / motor.getBusVoltage());
+    pidController.setReference(target, ControlType.kVelocity);
+    //motor.set(target);
+    addItem(error);
     
-    SmartDashboard.putNumber("Error", error);
-    SmartDashboard.putNumber("Factor", encoder.getVelocityConversionFactor());
-    SmartDashboard.putNumber("Current", motor.getOutputCurrent());
-    SmartDashboard.putNumber("Temperature", motor.getMotorTemperature());
     SmartDashboard.putNumber("Target", target);
     SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-
+    SmartDashboard.putNumber("Ratio", (motor.getBusVoltage() * motor.getAppliedOutput()) / encoder.getVelocity());
+    SmartDashboard.putNumber("CurrentLeader", motor.getOutputCurrent());
+    SmartDashboard.putNumber("Voltage", motor.getAppliedOutput() * motor.getBusVoltage());
+    SmartDashboard.putNumber("Error", encoder.getVelocity() - target);
   }
 
   @Override
