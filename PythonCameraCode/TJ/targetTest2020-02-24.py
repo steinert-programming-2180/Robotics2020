@@ -333,7 +333,7 @@ def findCameraPoints (contour):
         out.append(lowPoints[1])
         out.append(lowPoints[0])
 
-    print(out)
+    #print(out)
 
     return out
 
@@ -366,10 +366,19 @@ val = 18
 blank_image = np.zeros((480,640,3), np.uint8)
 epsilon = 25
 
+camera = UsbCamera("CammyBoi", 0)
+camera.setExposureManual(10)
+vidSink = CvSink("Camera")
+vidSink.setSource(camera)
+vidSource = CvSource("Processed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30)
+networkStream = MjpegServer("Stream", 1181)
+networkStream.setSource(vidSource)
+
 while True:
     #imgloc = "CameraCalibration\\2020Target\\my_photo-{imgNo}.jpg".format(imgNo = val)
-    imgloc = "CameraCalibration\\2020Target\\10sqrt2.jpg"
-    img = cv2.imread(imgloc)
+    #imgloc = "CameraCalibration\\2020Target\\10sqrt2.jpg"
+    img = vidSink.grabFrame(blank_image)
+    startTime = time.time()
     pipeline.process(img)
 
     processedImg = pipeline.mask_output
@@ -401,13 +410,10 @@ while True:
                                 np.array(cameraMatrix, dtype=np.float32), 
                                 np.array(dist, dtype=np.float32))
         distance, angle1, angle2 = compute_output_values(rvec, tvec)
-
+ 
         print(distance, angle1, angle2)
 
-    cv2.imshow('image', img)
-    ch = cv2.waitKey(0)
-
-    if(ch == ord(' ')):
-        break
+    print((time.time() - startTime) * 1000)
+    vidSource.putFrame(image)
 
 cv2.destroyAllWindows()

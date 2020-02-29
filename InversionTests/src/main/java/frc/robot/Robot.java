@@ -6,16 +6,15 @@
 /*----------------------------------------------------------------------------*/
 
 package frc.robot;
+
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj.Compressor;
-
-            
-//import edu.wpi.first.wpilibj.Victor; don't know
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -27,27 +26,34 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  Joystick joy1; 
-  //Victor victor; don't know 
-  Compressor c;
-  DoubleSolenoid solTest;
-  
-  
+
+  CANSparkMax leader, seven;
+  Joystick stick;
+
+  boolean invertLeader, invertSeven;
+
+  double[] differences = new double[1024];
+  double previous;
+  int counter = 0;
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   @Override
   public void robotInit() {
+    invertLeader = true;
+    invertSeven = true;
+    leader = new CANSparkMax(8, MotorType.kBrushless);
+    seven =  new CANSparkMax(2, MotorType.kBrushless);
+    leader.setInverted(invertLeader);
+    seven.follow(leader, invertSeven);
+
+    stick = new Joystick(0);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-    joy1 = new Joystick(0);
-    c = new Compressor();    
-    
-    solTest = new DoubleSolenoid(0, 1);
-   c.start();
-   }
+  }
 
   /**
    * This function is called every robot packet, no matter the mode. Use this for items like
@@ -98,6 +104,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    previous = stick.getRawAxis(1);
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -112,18 +119,17 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-   
-    if(joy1.getRawButtonPressed(8)) {
-      solTest.set(DoubleSolenoid.Value.kForward);
-      SmartDashboard.putString("Testing", "8 is pressed");
-    }else if(joy1.getRawButtonPressed(9)){
-      solTest.set(DoubleSolenoid.Value.kReverse);
-      SmartDashboard.putString("Testing", "9 is pressed");
-    } else { 
-      solTest.set(DoubleSolenoid.Value.kOff);
-     }
+    if((stick.getRawAxis(1) != previous) && (counter < 1024)) {
+      differences[counter] = stick.getRawAxis(1) - previous;
+      counter++;
+      previous = stick.getRawAxis(1);
+    }
+
+    leader.set(stick.getRawAxis(1));
+    SmartDashboard.putNumber("Joystick Axis", stick.getRawAxis(1));
+    SmartDashboard.putNumber("Leader Speed", leader.getEncoder().getVelocity());
+    SmartDashboard.putNumber("Follower Speed", seven.getEncoder().getVelocity());
   }
-  
 
   @Override
   public void testInit() {

@@ -6,16 +6,18 @@
 /*----------------------------------------------------------------------------*/
 
 package frc.robot;
-import edu.wpi.first.wpilibj.Joystick;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj.Compressor;
-
-            
-//import edu.wpi.first.wpilibj.Victor; don't know
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -27,12 +29,13 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  Joystick joy1; 
-  //Victor victor; don't know 
-  Compressor c;
-  DoubleSolenoid solTest;
-  
-  
+  CANSparkMax right;
+  CANSparkMax left;
+
+
+  XboxController controller;
+  Joystick joystick;
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -42,12 +45,17 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-    joy1 = new Joystick(0);
-    c = new Compressor();    
+
+    right = new CANSparkMax(2, MotorType.kBrushless);
+    left = new CANSparkMax(8, MotorType.kBrushless);
+
+    left.setInverted(true);
+    right.follow(left, true);
     
-    solTest = new DoubleSolenoid(0, 1);
-   c.start();
-   }
+
+    controller = new XboxController(0);
+    joystick = new Joystick(1);
+  }
 
   /**
    * This function is called every robot packet, no matter the mode. Use this for items like
@@ -112,18 +120,17 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-   
-    if(joy1.getRawButtonPressed(8)) {
-      solTest.set(DoubleSolenoid.Value.kForward);
-      SmartDashboard.putString("Testing", "8 is pressed");
-    }else if(joy1.getRawButtonPressed(9)){
-      solTest.set(DoubleSolenoid.Value.kReverse);
-      SmartDashboard.putString("Testing", "9 is pressed");
-    } else { 
-      solTest.set(DoubleSolenoid.Value.kOff);
-     }
+    double leftspeed = joystick.getRawAxis(2) * -1;
+
+    left.set(leftspeed + 1);
+
+    if(joystick.getRawButton(1)){
+      left.set((leftspeed + 1) * -1);
+    }
+
+    SmartDashboard.getNumber("Left speed", leftspeed);
+    
   }
-  
 
   @Override
   public void testInit() {
