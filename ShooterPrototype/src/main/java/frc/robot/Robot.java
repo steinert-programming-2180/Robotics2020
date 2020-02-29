@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpiutil.math.MathUtil;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -69,7 +70,7 @@ public class Robot extends TimedRobot {
 
     motor = new CANSparkMax(8, MotorType.kBrushless);
     motor2 = new CANSparkMax(2, MotorType.kBrushless);
-    encoder = motor.getEncoder(EncoderType.kHallSensor, 4096);
+    encoder = motor.getEncoder();
     motor.setInverted(false);
     motor2.follow(motor, true);
     
@@ -104,6 +105,8 @@ public class Robot extends TimedRobot {
     pidController.setFF(kFF);
     pidController.setOutputRange(kMinOutput, kMaxOutput);
     //motor.pidWrite(output);
+
+    encoder.setVelocityConversionFactor(1);
 
     robotContainer = new RobotContainer();
   }

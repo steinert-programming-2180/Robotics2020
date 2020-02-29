@@ -10,8 +10,8 @@ def connectionListener(connected, info):
         notified[0] = True
         cond.notify()
 
-NetworkTables.initialize(server='172.22.11.2')
-# NetworkTables.initialize(server='10.21.80.2')
+#NetworkTables.initialize(server='172.22.11.2')
+NetworkTables.initialize(server='10.21.80.2')
 NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
 
 with cond:
@@ -22,14 +22,22 @@ with cond:
 table = NetworkTables.getTable('SmartDashboard')
 
 while True:
-	velocity = table.getNumber('Velocity', 0)
+	leftvelocity = table.getNumber('LeftVelocity', 0)
 	#appliedPercentage = table.getNumber('Applied')
-	voltage = table.getNumber('Voltage', 0)
-	if ((velocity > 0) and (voltage > 0)):
-		ratio = voltage / velocity
+	leftvoltage = table.getNumber('LeftVoltage', 0)
+	rightvelocity = table.getNumber('RightVelocity', 0)
+	rightvoltage = table.getNumber('Right Voltage', 0)
+	if ((leftvelocity > 0) and (leftvoltage > 0)):
+		leftratio = leftvoltage / leftvelocity
 	else:
-		ratio = 0
-
-	print(ratio)
+		leftratio = 0
+	
+	if ((rightvelocity > 0) and (rightvoltage > 0)):
+		rightratio = rightvoltage / rightvelocity
+	else:
+		rightratio = 0
+	
+	print("Left: " + str(leftratio))
+	print("Right: " + str(rightratio))
 
 print("Connected!")
