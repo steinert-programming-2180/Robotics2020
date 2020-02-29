@@ -42,14 +42,14 @@ public class Robot extends TimedRobot {
     left1 = new CANSparkMax(1, MotorType.kBrushless);
     left2 = new CANSparkMax(2, MotorType.kBrushless);
     left3 = new CANSparkMax(3, MotorType.kBrushless);
-    left1.setInverted(true);
+    left1.setInverted(false);
     left2.follow(left1, false);
     left3.follow(left1, false);
     
     right1 = new CANSparkMax(4, MotorType.kBrushless);
     right2 = new CANSparkMax(5, MotorType.kBrushless);
     right3 = new CANSparkMax(6, MotorType.kBrushless);
-    right1.setInverted(false);
+    right1.setInverted(true);
     right2.follow(right1, false);
     right3.follow(right1, false);
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
@@ -120,11 +120,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    SmartDashboard.putNumber("leftJoystick", leftStick.getRawAxis(1));
-    SmartDashboard.putNumber("rightJoystick", rightStick.getRawAxis(1));
-
-    left1.set(leftStick.getRawAxis(1) * 0.2);
-    right1.set(rightStick.getRawAxis(1) * 0.2);
+    SmartDashboard.putNumber("LeftVoltage", leftStick.getRawAxis(1) * -0.4 * left1.getBusVoltage());
+    SmartDashboard.putNumber("RightVoltage", rightStick.getRawAxis(1) * -0.4 * right1.getBusVoltage());
+    SmartDashboard.putNumber("LeftVelocity", left1.getEncoder().getVelocity());
+    SmartDashboard.putNumber("RightVelocity", right1.getEncoder().getVelocity());
+    left1.set(leftStick.getRawAxis(1) * -1);
+    right1.set(rightStick.getRawAxis(1) * -1);
 
     // while(leftStick.getRawButton(1)){
     //   left1.set(leftStick.getRawAxis(1) * 0.2);

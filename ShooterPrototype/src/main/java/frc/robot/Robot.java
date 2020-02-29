@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpiutil.math.MathUtil;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -39,7 +40,7 @@ public class Robot extends TimedRobot {
   Joystick stick = new Joystick(0);
 
   private CANSparkMax motor;
-  private CANSparkMax motor2;
+  //private CANSparkMax motor2;
   private CANPIDController pidController;
   public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, target;
   Double[] recoveryTimes = new Double[1000];
@@ -70,10 +71,10 @@ public class Robot extends TimedRobot {
     target = 0;
 
     motor = new CANSparkMax(8, MotorType.kBrushless);
-    motor2 = new CANSparkMax(2, MotorType.kBrushless);
-    encoder = motor.getEncoder(EncoderType.kHallSensor, 4096);
+    //motor2 = new CANSparkMax(2, MotorType.kBrushless);
+    encoder = motor.getEncoder();
     motor.setInverted(false);
-    motor2.follow(motor, true);
+    //motor2.follow(motor, true);
     
     /**
      * In order to use PID functionality for a controller, a CANPIDController object
@@ -90,11 +91,12 @@ public class Robot extends TimedRobot {
     pidController.setFeedbackDevice(encoder);
 
     // PID coefficients
-    kP = 0.0003; 
+    kP = 0.0; 
     kI = 0.0;
     kD = 0.0; 
     kIz = 0.0; 
-    kFF = 0.00022; 
+    //kFF = 0.00022; 
+    kFF = 0.00022;
     kMaxOutput = 1.0; 
     kMinOutput = -1.0;
 
@@ -106,6 +108,8 @@ public class Robot extends TimedRobot {
     pidController.setFF(kFF);
     pidController.setOutputRange(kMinOutput, kMaxOutput);
     //motor.pidWrite(output);
+
+    encoder.setVelocityConversionFactor(1);
 
     robotContainer = new RobotContainer();
   }
@@ -178,48 +182,19 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // target = (stick.getRawAxis(2) - 1) * -0.5;
     // motor.set(target);
-    target = ((stick.getRawAxis(2) - 1) * -0.5) * 5000;
+    target = (((stick.getRawAxis(2) - 1) * -0.5) * 3000);
+    double newTarget = MathUtil.clamp(stick.getRawAxis(2), 0, 1);
     error = encoder.getVelocity() - target;
-    pidController.setFF(0.00214 / motor.getBusVoltage());
-    pidController.setReference(target, ControlType.kVelocity);
-    addItem(error);
+    //pidController.setFF(0.00214 / motor.getBusVoltage());
+    //pidController.setReference(target, ControlType.kVelocity);
+    motor.set(newTarget);
     
-    if ((error > 75) && !outRange) {
-      outRange = true;
-      firstTime = System.currentTimeMillis();
-    } if (outRange && error < 35) {
-      outRange = false;
-      secondTime = System.currentTimeMillis();
-    }
-    
-    SmartDashboard.putNumber("Recovery Time", secondTime - firstTime);
-
-    if(index < 1000){
-      Long recovTime = secondTime - firstTime;
-      recoveryTimes[index] = recovTime.doubleValue();
-      if(recoveryTimes[index] > max){
-        max = recoveryTimes[index];
-      }
-      SmartDashboard.putNumber("Max Recovery Time", max);
-      index++;
-    } else{
-      
-      for(Double i : recoveryTimes){
-        if(i > max){
-          max = i;
-        }
-      }
-      
-      index = 0;
-    }
-    //store differences in array
-    //iter each time and get max
-
     SmartDashboard.putNumber("Error", error);
-    
+    SmartDashboard.putNumber("Factor", encoder.getVelocityConversionFactor());
+    SmartDashboard.putNumber("Current", motor.getOutputCurrent());
+    SmartDashboard.putNumber("Temperature", motor.getMotorTemperature());
     SmartDashboard.putNumber("Target", target);
     SmartDashboard.putNumber("Velocity", encoder.getVelocity());
-    SmartDashboard.putNumber("Ratio", (motor.getBusVoltage() * motor.getAppliedOutput()) / encoder.getVelocity());
 
   }
 
