@@ -43,6 +43,7 @@ public class Robot extends TimedRobot {
   private CANSparkMax motor2;
   private CANPIDController pidController;
   public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, target;
+  int counter = 0;
 
   /**
    * A CANEncoder object is constructed using the GetEncoder() method on an 
@@ -89,7 +90,7 @@ public class Robot extends TimedRobot {
     pidController.setFeedbackDevice(encoder);
 
     // PID coefficients
-    kP = 0.00001; 
+    kP = 0.0001; 
     kI = 0.0;
     kD = 0.0; 
     kIz = 0.0; 
@@ -181,10 +182,15 @@ public class Robot extends TimedRobot {
     // motor.set(target);
     target = ((stick.getRawAxis(2) - 1) * -0.5) * 5000;
     //target = (stick.getRawAxis(2) - 1) * -0.5;
-    error = encoder.getVelocity() - target;
-    pidController.setFF(0.0021 / motor.getBusVoltage());
-    pidController.setReference(target, ControlType.kVelocity);
+      // error = encoder.getVelocity() - target;
+      // pidController.setFF(0.0021 / averager(motor.getBusVoltage()));
+      // pidController.setReference(target, ControlType.kVelocity);
     //motor.set(target);
+    if (encoder.getVelocity() < target) {
+      motor.set(1);
+    } else {
+      motor.set(0);
+    }
     addItem(error);
     
     SmartDashboard.putNumber("Target", target);
@@ -193,6 +199,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("CurrentLeader", motor.getOutputCurrent());
     SmartDashboard.putNumber("Voltage", motor.getAppliedOutput() * motor.getBusVoltage());
     SmartDashboard.putNumber("Error", encoder.getVelocity() - target);
+    SmartDashboard.putNumber("FF", pidController.getFF());
   }
 
   @Override
@@ -216,6 +223,24 @@ public class Robot extends TimedRobot {
       temp2 = errorVals[i];
       errorVals[i] = temp1;
       temp1 = temp2;
+    }
+  }
+  public double averager (double newVal) {
+    double[] voltages = new double[3];
+    int trueLength = 0;
+    double total = 0;
+    voltages[counter % voltages.length] = newVal;
+    counter++;
+    for (double i:voltages) {
+      if (i != 0.0) {
+        total += i;
+        trueLength++;
+      } 
+      counter++;
+    } if (trueLength > 0) {
+      return total / trueLength;
+    } else {
+      return 12.5;
     }
   }
 }
