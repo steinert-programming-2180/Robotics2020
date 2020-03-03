@@ -355,8 +355,8 @@ worldCoordinates = [[-19.645, 0, 0], #Top left
                     [19.645, 0, 0],  #Top right
                     [-9.8125, -17, 0], #Bottom left
                     [9.8125, -17, 0]] #Bottom right
-cameraMatrix = [[654.5772870367346, 0.0, 337.0507139506593], [0.0, 656.1587737528665, 250.33959129066534], [0.0, 0.0, 1.0]]
-dist = [[0.08347161242882054, -0.4187163193375646, 0.007898104661949604, -0.001084625132784283, -0.2415468504089658]]
+cameraMatrix = [[673.2946425835999, 0.0, 338.3273970742714], [0.0, 674.9130986966046, 243.23552203493037], [0.0, 0.0, 1.0]]
+dist = [[0.23043310501883713, -1.5921193536768907, 0.0012902916667479703, 0.0002779350479029492, 4.7017257685279095]]
 pipeline = FixingMistakes()
 
 maxPics = 30
@@ -365,25 +365,20 @@ val = 35
 blank_image = np.zeros((480,640,3), np.uint8)
 epsilon = 25
 
-camera = UsbCamera("CammyBoi", 0)
-camera.setExposureManual(10)
-vidSink = CvSink("Camera")
-vidSink.setSource(camera)
-vidSource = CvSource("Processed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30)
-networkStream = MjpegServer("Stream", 1181)
-networkStream.setSource(vidSource)
+# camera = UsbCamera("CammyBoi", 0)
+# camera.setExposureManual(10)
+# vidSink = CvSink("Camera")
+# vidSink.setSource(camera)
+# vidSource = CvSource("Processed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30)
+# networkStream = MjpegServer("Stream", 1181)
+# networkStream.setSource(vidSource)
 
 while True:
-<<<<<<< HEAD
-    #imgloc = "CameraCalibration\\2020Target\\my_photo-{imgNo}.jpg".format(imgNo = val)
-    #imgloc = "CameraCalibration\\2020Target\\10sqrt2.jpg"
-    img = vidSink.grabFrame(blank_image)
-    startTime = time.time()
-=======
-    imgloc = "CameraCalibration\\2020Target\\my_photo-{imgNo}.jpg".format(imgNo = val)
-    #imgloc = "CameraCalibration\\2020Target\\10sqrt2.jpg"
+    imgloc = "CameraCalibration\\2020Target\\5sqrt5.jpg"
+    # img = vidSink.grabFrame(blank_image)
+    # startTime = time.time()
+    # imgloc = "CameraCalibration\\2020Target\\10sqrt2.jpg"
     img = cv2.imread(imgloc)
->>>>>>> 8b31defef4fd0b3cc11c5f5612e24ae6357308dc
     pipeline.process(img)
 
     processedImg = pipeline.mask_output
@@ -419,7 +414,6 @@ while True:
  
         print(distance, angle1, angle2)
 
-    print((time.time() - startTime) * 1000)
-    vidSource.putFrame(image)
+    cv2.waitKey(1)
 
 cv2.destroyAllWindows()
