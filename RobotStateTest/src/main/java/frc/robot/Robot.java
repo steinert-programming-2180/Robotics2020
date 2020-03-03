@@ -6,17 +6,12 @@
 /*----------------------------------------------------------------------------*/
 
 package frc.robot;
-import edu.wpi.first.wpilibj.Joystick;
+
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj.Compressor;
-
-            
-//import edu.wpi.first.wpilibj.Victor; don't know
-
+import edu.wpi.first.wpilibj.RobotState;
+import edu.wpi.first.wpilibj.smartdashboard.*;
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -27,12 +22,7 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
-  Joystick joy1; 
-  //Victor victor; don't know 
-  Compressor c;
-  DoubleSolenoid solTest;
-  
-  
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -42,12 +32,7 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-    joy1 = new Joystick(0);
-    c = new Compressor();    
-    
-    solTest = new DoubleSolenoid(4, 5);
-   c.start();
-   }
+  }
 
   /**
    * This function is called every robot packet, no matter the mode. Use this for items like
@@ -112,18 +97,26 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-   
-    if(joy1.getRawButtonPressed(8)) {
-      solTest.set(DoubleSolenoid.Value.kForward);
-      SmartDashboard.putString("Testing", "8 is pressed");
-    }else if(joy1.getRawButtonPressed(9)){
-      solTest.set(DoubleSolenoid.Value.kReverse);
-      SmartDashboard.putString("Testing", "9 is pressed");
-    } else { 
-      solTest.set(DoubleSolenoid.Value.kOff);
+    if (RobotState.isAutonomous()){
+     SmartDashboard.putString("RobotState", "Autonomous");
+    } 
+    if (RobotState.isDisabled()){
+      SmartDashboard.putString("RobotState", "Disabled");
+     } 
+     if (RobotState.isEnabled()){
+      SmartDashboard.putString("RobotState", "Enabled");
+     } 
+     if (RobotState.isOperatorControl()){
+      SmartDashboard.putString("RobotState", "Operator Controled");
+     } 
+     if (RobotState.isTest()){
+      SmartDashboard.putString("RobotState", "Test");
      }
+     if (RobotState.isEStopped()){
+      SmartDashboard.putString("RobotState", "Emergency Stopped");
+     } 
   }
-  
+    
 
   @Override
   public void testInit() {
