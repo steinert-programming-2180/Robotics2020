@@ -292,8 +292,8 @@ def filter(polys):
         if len(p) == 4:
             output.append(p)
 
-    if len(output) == 0 and len(polys) > 0:
-        output.append(max(polys, key = cv2.contourArea))
+    # if len(output) == 0 and len(polys) > 0:
+    #     output.append(max(polys, key = cv2.contourArea))
 
     return output
 
@@ -359,37 +359,19 @@ cameraMatrix = [[673.2946784207013, 0.0, 338.32735791651214], [0.0, 674.91314496
 dist = [[0.23043245995377515, -1.5921125543828383, 0.0012903320182703385, 0.0002778925374253235, 4.701706032067453]]
 pipeline = FixingMistakes()
 
-maxPics = 30
-val = 35
-
 blank_image = np.zeros((480,640,3), np.uint8)
-epsilon = 25
+epsilon = 19
 
-# camera = UsbCamera("CammyBoi", 0)
-# camera.setExposureManual(10)
-# vidSink = CvSink("Camera")
-# vidSink.setSource(camera)
-# vidSource = CvSource("Processed", VideoMode.PixelFormat.kMJPEG, 640, 480, 30)
-# networkStream = MjpegServer("Stream", 1181)
-# networkStream.setSource(vidSource)
-
-
-# imgloc = "CameraCalibration\\2020Target\\5sqrt5.jpg"
-# img = vidSink.grabFrame(blank_image)
-# startTime = time.time()
-
-imgloc = "CameraCalibration\\2020Target\\my_photo-18.jpg"
+imgloc = "CameraCalibration\\2020Target\\my_photo-50.jpg"
 img = cv2.imread(imgloc)
 pipeline.process(img)
 
 processedImg = pipeline.mask_output
-cv2.imshow('mask', processedImg)
 contours = pipeline.filter_contours_1_output
 
 approxPolys = []
 for c in contours:
     approxPolys.append(cv2.approxPolyDP(c, epsilon, True))
-
 
 filteredPolys = filter(approxPolys)
 
@@ -399,13 +381,18 @@ imgCoords = []
 
 if len(filteredPolys) > 0:
     c = max(filteredPolys, key = cv2.contourArea)
-    cv2.drawContours(img, [c], -1, (255, 255, 255), 1)
+
+    print(len(c))
+
+    # cv2.drawContours(processedImg,[c],-1,(100,200,255), thickness=4)
+
+    cv2.drawContours(processedImg, [c], -1, (255, 255, 255), 1)
     imgCoords = findCameraPoints(c)
 
-    cv2.circle(img, tuple(imgCoords[0]), 2, (255, 0, 0), 1)   #top left - blue
-    cv2.circle(img, tuple(imgCoords[1]), 2, (0, 0, 255), 1)   #top right - red
-    cv2.circle(img, tuple(imgCoords[2]), 2, (255, 0, 255), 1) #bottom left - magenta
-    cv2.circle(img, tuple(imgCoords[3]), 2, (0, 255, 255), 1) #bottom right - yellow
+    cv2.circle(processedImg, tuple(imgCoords[0]), 2, (255, 0, 0), 1)   #top left - blue
+    cv2.circle(processedImg, tuple(imgCoords[1]), 2, (0, 0, 255), 1)   #top right - red
+    cv2.circle(processedImg, tuple(imgCoords[2]), 2, (255, 0, 255), 1) #bottom left - magenta
+    cv2.circle(processedImg, tuple(imgCoords[3]), 2, (0, 255, 255), 1) #bottom right - yellow
 
     retval, rvec, tvec = cv2.solvePnP(np.array(worldCoordinates, dtype=np.float32), 
                             np.array(imgCoords, dtype=np.float32), 
@@ -414,5 +401,7 @@ if len(filteredPolys) > 0:
     distance, angle1, angle2 = compute_output_values(rvec, tvec)
 
     print(distance, angle1, angle2)
+
+cv2.imshow('mask', processedImg)
 
 cv2.waitKey(10000)

@@ -69,8 +69,10 @@ public class Robot extends TimedRobot {
     // initialize SPARK MAX with CAN ID
     target = 0;
 
-    motor = new CANSparkMax(8, MotorType.kBrushless);
-    motor2 = new CANSparkMax(2, MotorType.kBrushless);
+    motor = new CANSparkMax(10, MotorType.kBrushless);
+    motor.restoreFactoryDefaults();
+    motor2 = new CANSparkMax(11, MotorType.kBrushless);
+    motor2.restoreFactoryDefaults();
     encoder = motor.getEncoder();
     motor.setInverted(false);
     motor2.follow(motor, true);
@@ -90,11 +92,11 @@ public class Robot extends TimedRobot {
     pidController.setFeedbackDevice(encoder);
 
     // PID coefficients
-    kP = 0.0001; 
+    kP = 0.0; 
     kI = 0.0;
     kD = 0.0; 
     kIz = 0.0; 
-    kFF = 0.0021; 
+    kFF = 0.00021; 
     kMaxOutput = 1.0; 
     kMinOutput = -1.0;
 
@@ -178,19 +180,15 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    target = 2000;
     // target = (stick.getRawAxis(2) - 1) * -0.5;
     // motor.set(target);
-    target = ((stick.getRawAxis(2) - 1) * -0.5) * 5000;
+    // target = ((stick.getRawAxis(2) - 1) * -0.5) * 5000;
     //target = (stick.getRawAxis(2) - 1) * -0.5;
       // error = encoder.getVelocity() - target;
       // pidController.setFF(0.0021 / averager(motor.getBusVoltage()));
-      // pidController.setReference(target, ControlType.kVelocity);
+    pidController.setReference(target, ControlType.kVelocity);
     //motor.set(target);
-    if (encoder.getVelocity() < target) {
-      motor.set(1);
-    } else {
-      motor.set(0);
-    }
     addItem(error);
     
     SmartDashboard.putNumber("Target", target);
