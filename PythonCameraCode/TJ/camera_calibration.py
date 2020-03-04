@@ -11,11 +11,12 @@ class CameraCalibration(object):
 
     def __init__(self):
         # number of inside corners in the chessboard (height and width)
-        self.checkerboard_height = 6
-        self.checkerboard_width = 9
+        self.checkerboard_height = 4
+        self.checkerboard_width = 5
 
         # size of chessboard square in physical units
-        self.square_size = 15.0/16
+        # self.square_size = 23.0/16
+        self.square_size = 1.420
 
         self.shape = None
         return
@@ -37,19 +38,15 @@ class CameraCalibration(object):
         objpoints = []          # 3d point in real world space
         imgpoints = []          # 2d points in image plane.
 
+        for i in range(59):
 
-        for i in range(1, 30):
-            
-            #if i in range(38,41) or i in range(45,49) or i == 51 or i == 54 or i in range(58, 60):
-            #    continue
+            fname = "CameraCalibration\\2020Checkerboards\\img{}.jpg".format(i)
 
-            imgLoc = "CameraCalibration\\2020Checkerboards\\img{imgNo}.jpg".format(imgNo = i)
-            
-            print('Processing file', imgLoc)
-            img = cv2.imread(imgLoc)
+            print('Processing file', fname)
+            img = cv2.imread(fname)
 
             if img is None:
-                print("ERROR: Unable to read file", imgLoc)
+                print("ERROR: Unable to read file", fname)
                 continue
             self.shape = img.shape
 
@@ -67,17 +64,14 @@ class CameraCalibration(object):
 
                 # Draw and display the corners
                 img = cv2.drawChessboardCorners(img, (self.checkerboard_width, self.checkerboard_height), corners2, ret)
-                
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                
                 cv2.imshow('img', img)
                 if output_dir:
-                    fullname = os.path.join(output_dir, os.path.basename(imgLoc))
+                    fullname = os.path.join(output_dir, os.path.basename(fname))
                     cv2.imwrite(fullname, img)
 
                 cv2.waitKey(500)
             else:
-                print(imgLoc, 'failed')
+                print(fname, 'failed')
 
         cv2.destroyAllWindows()
 
@@ -96,23 +90,9 @@ if __name__ == '__main__':
     import json
     import sys
 
-    parser = argparse.ArgumentParser(description='Calibration utility')
-    parser.add_argument('--length', '-l', type=int, default=6, help='Length of checkerboard (number of corners)')
-    parser.add_argument('--width', '-w', type=int, default=9, help='Width of checkerboard (number of corners)')
-    parser.add_argument('--size', '-s', type=float, default=15.0/16, help='Size of square')
-    parser.add_argument('--output', '-o', nargs=1, help="Save the distortion constants to json file")
-    parser.add_argument('--output-images', nargs=1, help="Save processed images to directory")
-
-    args = parser.parse_args()
-
-
-
     calibrate = CameraCalibration()
-    calibrate.checkerboard_width = args.width
-    calibrate.checkerboard_height = args.length
-    calibrate.square_size = args.size
 
-    output_dir = args.output_images[0] if args.output_images else None
+    output_dir = "CameraCalibration\\2020ProcessedCheckerboards"
 
     ret, mtx, dist, rvecs, tvecs = calibrate.calibrateCamera(output_dir)
     print('reprojection error =', ret)
@@ -124,9 +104,3 @@ if __name__ == '__main__':
 
     print('mtx =', mtx)
     print('dist =', dist)
-
-    # If the command line argument was specified, save matrices to a file in JSON format
-    if args.output:
-        # Writing JSON data
-        with open(args.output[0], 'w') as f:
-            json.dump({"camera_matrix": mtx, "distortion": dist}, f)
