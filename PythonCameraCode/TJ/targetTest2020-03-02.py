@@ -76,7 +76,7 @@ class FixingMistakes:
         self.__filter_contours_1_min_height = 0.0
         self.__filter_contours_1_max_height = 1000.0
         self.__filter_contours_1_solidity = [0, 100]
-        self.__filter_contours_1_max_vertices = 20.0
+        self.__filter_contours_1_max_vertices = 40.0
         self.__filter_contours_1_min_vertices = 3.0
         self.__filter_contours_1_min_ratio = 0.0
         self.__filter_contours_1_max_ratio = 1000.0
@@ -360,11 +360,13 @@ dist = [[0.23043245995377515, -1.5921125543828383, 0.0012903320182703385, 0.0002
 pipeline = FixingMistakes()
 
 blank_image = np.zeros((480,640,3), np.uint8)
-epsilon = 19
+epsilon = 14
 
-imgloc = "CameraCalibration\\2020Target\\my_photo-50.jpg"
+imgloc = "CameraCalibration\\2020Target\\my_photo-40.jpg"
 img = cv2.imread(imgloc)
 pipeline.process(img)
+
+print(len(pipeline.convex_hulls_output[0]))
 
 processedImg = pipeline.mask_output
 contours = pipeline.filter_contours_1_output
@@ -372,6 +374,9 @@ contours = pipeline.filter_contours_1_output
 approxPolys = []
 for c in contours:
     approxPolys.append(cv2.approxPolyDP(c, epsilon, True))
+
+cv2.drawContours(processedImg, approxPolys, -1, (255, 255, 255), 1)
+print(approxPolys)
 
 filteredPolys = filter(approxPolys)
 
@@ -381,8 +386,6 @@ imgCoords = []
 
 if len(filteredPolys) > 0:
     c = max(filteredPolys, key = cv2.contourArea)
-
-    print(len(c))
 
     # cv2.drawContours(processedImg,[c],-1,(100,200,255), thickness=4)
 
