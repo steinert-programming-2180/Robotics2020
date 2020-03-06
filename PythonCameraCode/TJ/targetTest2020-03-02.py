@@ -360,7 +360,7 @@ dist = [[0.23043245995377515, -1.5921125543828383, 0.0012903320182703385, 0.0002
 pipeline = FixingMistakes()
 
 blank_image = np.zeros((480,640,3), np.uint8)
-epsilon = 14
+epsilon = 16
 
 imgloc = "CameraCalibration\\2020Target\\my_photo-40.jpg"
 img = cv2.imread(imgloc)
