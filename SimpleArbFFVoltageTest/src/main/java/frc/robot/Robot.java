@@ -15,6 +15,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -135,6 +136,14 @@ public class Robot extends TimedRobot {
 
     leftPID.setReference(0, ControlType.kVelocity, 0, leftFF);
     rightPID.setReference(0, ControlType.kVelocity, 0, rightFF);
+
+    //left1.setVoltage(leftFF);
+    //right1.setVoltage(rightFF);
+
+    SmartDashboard.putNumber("LeftAttemptedV", leftFF);
+    SmartDashboard.putNumber("LeftActual", left1.getAppliedOutput() * left1.getBusVoltage());
+    SmartDashboard.putNumber("RightAttemptedV", rightFF);
+    SmartDashboard.putNumber("RightActual", right1.getAppliedOutput() * right1.getBusVoltage());
   }
 
   @Override
